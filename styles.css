@@ -1,0 +1,116 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+#app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#champion-list h1 {
+    text-align: center;
+    color: #333;
+}
+
+.champion-card {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+.champion-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.champion-info {
+    flex-grow: 1;
+}
+
+.champion-name {
+    font-weight: bold;
+    font-size: 18px;
+    color: #333;
+}
+
+.champion-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 14px;
+    color: #666;
+}
+
+#champion-detail {
+    padding: 20px;
+}
+
+#back-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.champion-details {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.talents-section, .build-section {
+    margin: 20px 0;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.talent-row {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.talent-icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.build-item {
+    display: inline-block;
+    margin: 5px;
+    text-align: center;
+}
+
+.build-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+}
