@@ -2,6 +2,11 @@
   "version": 2,
   "builds": [
     {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "public" }
+    },
+    {
       "src": "server.js",
       "use": "@vercel/node"
     }
@@ -10,18 +15,6 @@
     {
       "src": "/api/(.*)",
       "dest": "/server.js"
-    },
-    {
-      "src": "/ddragon/(.*)",
-      "dest": "/public/ddragon/$1"
-    },
-    {
-      "src": "/js/(.*)",
-      "dest": "/public/js/$1"
-    },
-    {
-      "src": "/styles.css",
-      "dest": "/public/styles.css"
     },
     {
       "src": "/(.*)",
