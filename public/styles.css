@@ -1,13 +1,22 @@
+/* Telegram theme variables - для Mini App */
 :root {
-    --bg-color: #18181b; /* Темный фон */
+    --tg-theme-bg-color: #0f172a;
+    --tg-theme-text-color: #f1f5f9;
+    --tg-theme-button-color: #7c3aed;
+    --tg-theme-button-text-color: #ffffff;
+    --tg-theme-secondary-bg-color: #1e293b;
+    --tg-theme-hint-color: #64748b;
+    --tg-theme-link-color: #7c3aed;
+    
+    --bg-color: #18181b;
     --card-bg: #27272a;
     --text-main: #ffffff;
     --text-sec: #a1a1aa;
-    --accent: #3b82f6; /* Синий Telegram */
+    --accent: #3b82f6;
     --win-green: #22c55e;
     --lose-red: #ef4444;
     --warning: #f59e0b;
-    
+
     /* Цвета ролей */
     --role-top: #d97706;
     --role-jungle: #16a34a;
@@ -16,6 +25,12 @@
     --role-sup: #06b6d4;
 
     --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Apply Telegram theme when running in Telegram */
+body.telegram-theme {
+    background-color: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
 }
 
 body {

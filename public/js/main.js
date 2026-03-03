@@ -2,6 +2,7 @@ import { AppState } from './state.js';
 import { setStatus } from './utils.js';
 import { loadGameData, loadStats } from './data-loader.js';
 import { renderList, initFilters, initSearch } from './render-list.js';
+import { initTelegram } from './telegram.js';
 import { CONFIG } from './config.js';
 
 // Делаем CONFIG доступным глобально для inline HTML событий (onclick и т.д.)
@@ -11,6 +12,12 @@ async function initApp() {
     setStatus('gray');
     const listEl = document.getElementById('champions-list');
     if (listEl) listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#888;">Loading databases...</div>';
+
+    // 0. Инициализация Telegram (если запущено в Telegram)
+    const isTelegram = initTelegram();
+    if (isTelegram) {
+        console.log('Running in Telegram Mini App');
+    }
 
     // 1. Load Game Data (Champions, Items, Runes)
     const dataLoaded = await loadGameData();
@@ -35,12 +42,17 @@ async function initApp() {
     }
 
     setStatus('green');
-    
-    // 4. Инициализация фильтров и поиска
+
+    // 4. Показываем MainButton в Telegram
+    if (window.showTelegramMainButton) {
+        window.showTelegramMainButton();
+    }
+
+    // 5. Инициализация фильтров и поиска
     initFilters();
     initSearch();
-    
-    // 5. Рендер списка
+
+    // 6. Рендер списка
     renderList();
 
     console.log('🚀 App initialized successfully');
