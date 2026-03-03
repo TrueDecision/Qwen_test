@@ -8,6 +8,10 @@
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "/server.js"
+    },
+    {
       "src": "/ddragon/(.*)",
       "dest": "/public/ddragon/$1"
     },
@@ -20,16 +24,8 @@
       "dest": "/public/styles.css"
     },
     {
-      "src": "/",
-      "dest": "/public/index.html"
-    },
-    {
       "src": "/(.*)",
       "dest": "/public/$1"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
     }
   ],
   "env": {
