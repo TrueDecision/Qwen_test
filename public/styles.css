@@ -1,0 +1,320 @@
+:root {
+    --bg-color: #18181b; /* Темный фон */
+    --card-bg: #27272a;
+    --text-main: #ffffff;
+    --text-sec: #a1a1aa;
+    --accent: #3b82f6; /* Синий Telegram */
+    --win-green: #22c55e;
+    --lose-red: #ef4444;
+    --warning: #f59e0b;
+    
+    /* Цвета ролей */
+    --role-top: #d97706;
+    --role-jungle: #16a34a;
+    --role-mid: #3b82f6;
+    --role-bot: #ec4899;
+    --role-sup: #06b6d4;
+
+    --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Утилиты */
+.hidden { display: none !important; }
+.view { display: none; padding-bottom: 40px; }
+.view.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Статус флаг */
+.status-flag {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 1000;
+    font-size: 16px;
+    border: 2px solid #444;
+}
+.status-green { background: var(--win-green); border-color: #15803d; }
+.status-red { background: var(--lose-red); border-color: #991b1b; }
+.status-yellow { background: var(--warning); border-color: #b45309; }
+.status-gray { background: #555; border-color: #333; }
+
+/* Хедер */
+.app-header {
+    padding: 15px;
+    background: rgba(24, 24, 27, 0.95);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid #333;
+}
+.app-header.sticky { top: 0; }
+.region-badge {
+    font-size: 0.6em;
+    background: #333;
+    padding: 2px 6px;
+    border-radius: 4px;
+    vertical-align: middle;
+    color: var(--text-sec);
+}
+
+/* Фильтры ролей */
+.filters {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scrollbar-width: none;
+}
+.filter-btn {
+    background: var(--card-bg);
+    border: 1px solid #333;
+    color: var(--text-sec);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.filter-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* Поиск */
+.search-bar {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+}
+.search-bar input {
+    flex: 1;
+    background: #333;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+}
+.search-bar button {
+    background: var(--card-bg);
+    border: 1px solid #444;
+    color: white;
+    padding: 0 15px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Список чемпионов */
+.champions-list {
+    padding: 10px;
+    display: grid;
+    gap: 10px;
+}
+.champ-card {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+    overflow: hidden;
+}
+.champ-card:active { transform: scale(0.98); }
+
+.champ-icon-wrap {
+    position: relative;
+    margin-right: 12px;
+}
+.champ-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    object-fit: cover;
+}
+/* Цвета рамок ролей */
+.role-TOP { border-color: var(--role-top); }
+.role-JUNGLE { border-color: var(--role-jungle); }
+.role-MIDDLE { border-color: var(--role-mid); }
+.role-BOTTOM { border-color: var(--role-bot); }
+.role-UTILITY { border-color: var(--role-sup); }
+
+.champ-info { flex: 1; }
+.champ-name { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+.champ-stats {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-sec);
+    align-items: center;
+}
+.stat-pill {
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.win-rate-high { color: var(--win-green); }
+.win-rate-low { color: var(--lose-red); }
+.games-count { display: flex; align-items: center; gap: 4px; }
+.warning-icon { color: var(--warning); font-size: 14px; }
+
+/* Детали чемпиона */
+.roles-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    background: #202023;
+}
+.role-tab {
+    padding: 5px 15px;
+    border-radius: 6px;
+    background: #333;
+    font-size: 13px;
+    cursor: pointer;
+}
+.role-tab.active { background: var(--accent); color: white; }
+
+.warning-banner {
+    background: rgba(245, 158, 11, 0.15);
+    border-left: 4px solid var(--warning);
+    color: var(--warning);
+    padding: 10px 15px;
+    font-size: 13px;
+    margin: 10px;
+    border-radius: 4px;
+}
+
+/* Переключатель билдов */
+.build-switcher {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    overflow-x: auto;
+}
+.build-card {
+    flex: 1;
+    min-width: 140px;
+    background: #333;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    position: relative;
+}
+.build-card.active {
+    border-color: var(--accent);
+    background: #3a3a40;
+}
+.build-card h4 { margin: 0 0 5px 0; font-size: 13px; }
+.build-card .percent { font-size: 12px; color: var(--text-sec); }
+.build-card .mini-runes {
+    display: flex;
+    gap: 2px;
+    margin-top: 5px;
+}
+.mini-rune { width: 16px; height: 16px; border-radius: 50%; background: #555; }
+
+/* Сетка рун */
+.runes-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    margin: 10px 0;
+    background: #222;
+    padding: 10px;
+    border-radius: 8px;
+}
+.rune-slot {
+    aspect-ratio: 1;
+    background: #333;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.rune-slot img { width: 80%; height: 80%; border-radius: 50%; }
+.rune-slot.active { background: #444; box-shadow: 0 0 5px var(--accent); }
+.rune-slot.inactive { opacity: 0.3; }
+
+/* Предметы */
+.items-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.item-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: #333;
+    border: 1px solid #444;
+}
+.items-row.core .item-img {
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--accent);
+}
+.label-small { font-size: 11px; color: var(--text-sec); text-transform: uppercase; }
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+.stat-box {
+    background: #222;
+    padding: 10px;
+    border-radius: 8px;
+    width: 48%;
+    text-align: center;
+}
+.stat-box .label { font-size: 11px; color: var(--text-sec); display: block; }
+.stat-box .value { font-size: 18px; font-weight: bold; display: block; margin: 5px 0; }
+.progress-bar {
+    height: 4px;
+    background: #444;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.progress-bar .fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.note-text {
+    font-size: 12px;
+    color: var(--text-sec);
+    font-style: italic;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.loader { text-align: center; padding: 20px; color: var(--text-sec); }

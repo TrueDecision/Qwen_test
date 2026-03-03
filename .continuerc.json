@@ -1,0 +1,10 @@
+models:
+  - name: GitHub Models (GPT-4o mini)
+    provider: openai
+    model: gpt-4o-mini
+    apiKey: "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"  # Сюда вставьте ваш токен (github_pat_...)
+    apiBase: https://models.inference.ai.azure.com
+    roles:
+      - chat
+      - edit
+      - apply

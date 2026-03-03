@@ -1,0 +1,10 @@
+node_modules
+.env
+*.md
+*.bat
+*.log
+cache/*.json
+!cache/full-analytics-stats.json
+.git
+.qwen
+.vscode

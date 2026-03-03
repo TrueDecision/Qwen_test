@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LoL Stats EUW</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Стили для тултипа и модального окна можно оставить здесь или вынести в styles.css -->
+    <style>
+        .tooltip-box { position: fixed; background: rgba(15, 23, 42, 0.98); border: 1px solid #fbbf24; color: #f1f5f9; padding: 12px; border-radius: 6px; max-width: 300px; pointer-events: none; z-index: 9999; display: none; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.7); font-family: sans-serif; font-size: 13px; line-height: 1.5; }
+        .tooltip-title { font-weight: bold; color: #fbbf24; margin-bottom: 6px; font-size: 14px; border-bottom: 1px solid #334155; padding-bottom: 3px; }
+        .tooltip-desc { color: #cbd5e1; white-space: pre-line; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10000; display: none; justify-content: center; align-items: center; backdrop-filter: blur(4px); cursor: pointer; }
+        .modal-content { background: #1e293b; border: 1px solid #475569; border-radius: 12px; max-width: 500px; width: 90%; padding: 20px; position: relative; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); animation: modalFadeIn 0.2s ease-out; cursor: default; max-height: 80vh; overflow-y: auto; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; color: #94a3b8; cursor: pointer; transition: color 0.2s; }
+        .modal-close:hover { color: #fff; }
+        .modal-header { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
+        .modal-img { width: 64px; height: 64px; border-radius: 8px; border: 2px solid #fbbf24; background: #0f172a; object-fit: cover; }
+        .modal-title { font-size: 20px; font-weight: bold; color: #fbbf24; margin: 0; }
+        .modal-subtitle { font-size: 14px; color: #94a3b8; margin-top: 4px; }
+        .modal-body { color: #cbd5e1; font-size: 14px; line-height: 1.6; }
+        .skill-table-container { margin-top: 20px; background: #0f172a; padding: 8px; border-radius: 8px; border: 1px solid #334155; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .skill-table { border-collapse: collapse; width: 100%; font-size: 10px; text-align: center; table-layout: fixed; min-width: 450px; }
+        .skill-table th, .skill-table td { border: 1px solid #334155; padding: 4px 2px; color: #cbd5e1; }
+        .skill-table th { background: #1e293b; color: #fbbf24; font-weight: bold; font-size: 9px; }
+        .skill-table th:first-child, .skill-table td:first-child { width: 140px; min-width: 140px; position: sticky; left: 0; background: inherit; z-index: 1; }
+        .skill-table th { width: 22px; }
+        /* Цвета строк таблицы навыков */
+        .row-q { border-left: 3px solid #ef4444 !important; }
+        .row-w { border-left: 3px solid #3b82f6 !important; }
+        .row-e { border-left: 3px solid #eab308 !important; }
+        .row-r { border-left: 3px solid #a855f7 !important; }
+        .row-p { border-left: 3px solid #f97316 !important; }
+        .skill-point { width: 14px; height: 14px; background: #334155; border-radius: 50%; display: inline-block; }
+        .skill-point.active { background: #fbbf24; box-shadow: 0 0 8px #fbbf24; transform: scale(1.2); }
+        /* Цвета ролей */
+        .role-top { background-color: #ef4444 !important; }
+        .role-jungle { background-color: #22c55e !important; }
+        .role-mid { background-color: #3b82f6 !important; }
+        .role-adc { background-color: #eab308 !important; }
+        .role-support { background-color: #14b8a6 !important; }
+        /* EARLY ACCESS badge */
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .early-access-badge { color: #ef4444; font-weight: bold; font-size: 11px; letter-spacing: 1px; animation: pulse 2s infinite; }
+    </style>
+</head>
+<body style="background-color: #0f172a; color: #f1f5f9; font-family: sans-serif; margin: 0; padding: 20px;">
+
+    <div id="app">
+        <header style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; position: relative;">
+            <h1 id="page-title" style="margin: 0; font-size: 24px;">LoL Stats EUW</h1>
+            <div id="header-meta" style="color: #94a3b8; font-size: 14px;">Loading...</div>
+            <span id="status-flag" class="status-flag" style="font-size: 12px;">⚪</span>
+            <button id="back-btn" style="display:none; background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">← Back</button>
+            <div style="position:absolute; right:0; top:10px; color:#ef4444; font-weight:bold; font-size:11px; letter-spacing:1px; animation:pulse 2s infinite;">⚠ EARLY ACCESS</div>
+        </header>
+
+        <main>
+            <div id="view-list">
+                <!-- Фильтры и поиск -->
+                <div style="margin-bottom:15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <div id="role-filters" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+                </div>
+                <div style="margin-bottom:20px; display:flex; gap:10px; align-items:center;">
+                    <input type="text" id="champion-search" placeholder="🔍 Search champion..." 
+                           style="flex:1; max-width:300px; background:#1e293b; border:1px solid #334155; 
+                                  color:#f1f5f9; padding:8px 12px; border-radius:6px; font-size:14px; outline:none;"
+                           onfocus="this.style.borderColor='#fbbf24'" onblur="this.style.borderColor='#334155'">
+                    <span id="champion-counter" style="color:#64748b; font-size:13px; min-width:120px;"></span>
+                </div>
+                <div id="champions-list"></div>
+            </div>
+            <div id="view-detail" class="hidden" style="display: none;">
+                <div id="detail-content"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Модальное окно (HTML шаблон) -->
+    <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.closeDetailModal()">
+        <div class="modal-content">
+            <span class="modal-close" onclick="window.closeDetailModal()">&times;</span>
+            <div class="modal-header">
+                <img id="modal-img" class="modal-img" src="" alt="">
+                <div>
+                    <h3 id="modal-title" class="modal-title"></h3>
+                    <div id="modal-subtitle" class="modal-subtitle"></div>
+                </div>
+            </div>
+            <div id="modal-desc" class="modal-body"></div>
+            <div id="modal-stats" class="modal-stats"></div>
+        </div>
+    </div>
+
+    <!-- Подключаем главный модуль -->
+    <script type="module" src="js/config.js"></script>
+    <script type="module" src="js/state.js"></script>
+    <script type="module" src="js/utils.js"></script>
+    <script type="module" src="js/data-loader.js"></script>
+    <script type="module" src="js/skill-order.js"></script>
+    <script type="module" src="js/render-skills.js"></script>
+    <script type="module" src="js/render-runes.js"></script>
+    <script type="module" src="js/render-detail.js"></script>
+    <script type="module" src="js/render-list.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
