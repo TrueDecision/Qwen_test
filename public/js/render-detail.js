@@ -381,11 +381,15 @@ export function renderChampionDetail(champ, currentRoleKey, buildIndex = 0) {
                                 ${(freqAnalysis.items || []).filter(item => !bootsIds.includes(item.id)).map(item => {
                                     const itemData = AppState.db.items[String(item.id)];
                                     const itemImg = itemData ? `${CONFIG.DDRAGON_BASE}/img/item/${itemData.file}` : '';
+                                    const itemName = itemData?.name || 'Unknown';
+                                    const itemDesc = itemData?.desc || '';
                                     return `
-                                    <div style="display:flex; align-items:center; gap:8px; background:#0f172a; padding:6px; border-radius:6px;">
+                                    <div style="display:flex; align-items:center; gap:8px; background:#0f172a; padding:6px; border-radius:6px; cursor:pointer;"
+                                         onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '${itemDesc ? itemDesc.replace(/'/g, "\\'").substring(0, 200) : ''}')"
+                                         onmouseleave="window.hideTooltip()">
                                         <img src="${itemImg}" style="width:28px; height:28px; border-radius:4px;">
                                         <div style="flex:1; min-width:0;">
-                                            <div style="font-size:10px; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemData?.name || 'Unknown'}</div>
+                                            <div style="font-size:10px; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemName}</div>
                                             <div style="font-size:9px; color:#64748b;">${item.percent}% • ${item.avgPosition} pos</div>
                                         </div>
                                     </div>`;
@@ -400,11 +404,15 @@ export function renderChampionDetail(champ, currentRoleKey, buildIndex = 0) {
                                     ${freqAnalysis.boots.map(boot => {
                                         const bootData = AppState.db.items[String(boot.id)];
                                         const bootImg = bootData ? `${CONFIG.DDRAGON_BASE}/img/item/${bootData.file}` : '';
+                                        const bootName = bootData?.name || 'Boots';
+                                        const bootDesc = bootData?.desc || '';
                                         return `
-                                        <div style="display:flex; align-items:center; gap:6px; background:#0f172a; padding:6px 10px; border-radius:6px; border:1px solid #475569;">
+                                        <div style="display:flex; align-items:center; gap:6px; background:#0f172a; padding:6px 10px; border-radius:6px; border:1px solid #475569; cursor:pointer;"
+                                             onmouseenter="window.showTooltip(event, '${bootName.replace(/'/g, "\\'")}', '${bootDesc ? bootDesc.replace(/'/g, "\\'").substring(0, 200) : ''}')"
+                                             onmouseleave="window.hideTooltip()">
                                             <img src="${bootImg}" style="width:24px; height:24px; border-radius:4px;">
                                             <div>
-                                                <div style="font-size:10px; color:#f1f5f9;">${bootData?.name || 'Boots'}</div>
+                                                <div style="font-size:10px; color:#f1f5f9;">${bootName}</div>
                                                 <div style="font-size:9px; color:#64748b;">${boot.percent}% pick</div>
                                             </div>
                                         </div>`;
