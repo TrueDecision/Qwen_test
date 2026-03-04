@@ -300,6 +300,25 @@ export function renderChampionDetail(champ, currentRoleKey, buildIndex = 0) {
                         const arrow = '<div style="color:#475569; font-size:18px; font-weight:bold;">→</div>';
 
                         return `
+                        <!-- Стартовые предметы -->
+                        ${freqAnalysis?.startingItems && freqAnalysis.startingItems.length > 0 ? `
+                        <div style="margin-bottom:12px;">
+                            <div style="font-size:11px; color:#94a3b8; margin-bottom:6px; text-transform:uppercase;">Starting Items</div>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                ${freqAnalysis.startingItems.map((start, idx) => `
+                                    <div style="background:#1e293b; padding:6px 10px; border-radius:6px; border:1px solid #334155; display:flex; align-items:center; gap:6px;">
+                                        ${start.items.map(itemId => {
+                                            const item = AppState.db.items[String(itemId)];
+                                            const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
+                                            return itemImg ? `<img src="${itemImg}" style="width:24px; height:24px; border-radius:4px;" title="${item.name}">` : '';
+                                        }).join('')}
+                                        <div style="font-size:9px; color:#64748b; margin-left:4px;">${start.percent}%</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+
                         <!-- Основные предметы -->
                         <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center; background:#0f172a; padding:10px; border-radius:8px; border:1px solid #1e293b;">
                             ${nonBootsItems.length > 0

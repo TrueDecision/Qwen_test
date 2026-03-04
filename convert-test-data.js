@@ -33,6 +33,32 @@ Object.entries(testData).forEach(([champId, roles]) => {
         let roleWins = 0;
         let roleGames = 0;
 
+        // === СТАРТОВЫЕ ПРЕДМЕТЫ ===
+        // Предметы которые считаются стартовыми
+        const STARTING_ITEMS = new Set([
+            // Doran's
+            1055,  // Doran's Blade
+            1056,  // Doran's Ring
+            1054,  // Doran's Shield
+            // Лесник
+            1039,  // Hunter's Machete
+            1041,  // Emberknife
+            // Саппорт
+            3850,  // Relic Shield
+            3851,  // Spellthief's Edge
+            3854,  // Steel Shoulderguards
+            3858,  // Spectral Sickle
+            // Зелья и старт
+            2003,  // Health Potion
+            2031,  // Refillable Potion
+            2033,  // Corrupting Potion
+            2055,  // Control Ward
+            // Меч
+            1036   // Long Sword
+        ]);
+        
+        const startingItemStats = {};  // { "1055-2003": { count, wins, items: [] } }
+
         // === ЧАСТОТНЫЙ АНАЛИЗ ПРЕДМЕТОВ ===
         // Считаем частоту каждого предмета и его среднюю позицию
         const itemStats = {};  // itemId -> { count, positions[], wins }
@@ -43,6 +69,19 @@ Object.entries(testData).forEach(([champId, roles]) => {
             if (game.win) roleWins++;
 
             const items = game.items || [];
+            
+            // Собираем стартовые предметы (первые 2-3 предмета)
+            const startingItems = items.slice(0, 3).filter(id => STARTING_ITEMS.has(id));
+            if (startingItems.length > 0) {
+                const startingKey = startingItems.sort().join('-');
+                if (!startingItemStats[startingKey]) {
+                    startingItemStats[startingKey] = { count: 0, wins: 0, items: startingItems };
+                }
+                startingItemStats[startingKey].count++;
+                if (game.win) startingItemStats[startingKey].wins++;
+            }
+
+            // Считаем все предметы для основного билда
             items.forEach((itemId, idx) => {
                 if (!itemStats[itemId]) {
                     itemStats[itemId] = { count: 0, positions: [], wins: 0 };
@@ -61,6 +100,17 @@ Object.entries(testData).forEach(([champId, roles]) => {
                 }
             });
         });
+
+        // === ТОП-3 СТАРТОВЫХ ПРЕДМЕТА ===
+        const topStartingItems = Object.values(startingItemStats)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 3)
+            .map(s => ({
+                items: s.items,
+                count: s.count,
+                percent: roleGames > 0 ? ((s.count / roleGames) * 100).toFixed(1) : 0,
+                winRate: s.count > 0 ? ((s.wins / s.count) * 100).toFixed(1) : 0
+            }));
 
         // === ОПРЕДЕЛЯЕМ ТИПИЧНЫЙ БИЛД ===
         // Сортируем предметы по: 1) частоте, 2) средней позиции (порядок покупки)
@@ -117,6 +167,7 @@ Object.entries(testData).forEach(([champId, roles]) => {
             skillOrders: [],
             // Частотный анализ для отображения
             frequencyAnalysis: {
+                startingItems: topStartingItems,
                 items: nonBootsItems.slice(0, 10).map(x => ({
                     id: x.id,
                     count: x.count,
