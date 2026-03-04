@@ -28,19 +28,49 @@ export function setStatus(status) {
 window.showTooltip = function(e, title, desc) {
     const tooltip = document.getElementById('game-tooltip');
     if (!tooltip || !title) return;
-    
+
     const safeTitle = title ? title.replace(/"/g, '&quot;') : '';
     const safeDesc = desc ? desc.replace(/"/g, '&quot;') : '';
-    
+
     tooltip.innerHTML = `<div class="tooltip-title">${safeTitle}</div><div class="tooltip-desc">${safeDesc}</div>`;
     tooltip.style.display = 'block';
+
+    // Отступ от края экрана
+    const padding = 10;
     
-    let x = e.clientX + 15;
-    let y = e.clientY + 15;
+    // Получаем размеры tooltip
     const rect = tooltip.getBoundingClientRect();
-    if (x + rect.width > window.innerWidth) x = e.clientX - rect.width - 15;
-    if (y + rect.height > window.innerHeight) y = e.clientY - rect.height - 15;
     
+    // Позиция курсора
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    
+    // Пробуем разместить справа и снизу от курсора
+    let x = mouseX + 15;
+    let y = mouseY + 15;
+    
+    // Проверяем правую границу
+    if (x + rect.width > window.innerWidth - padding) {
+        // Размещаем слева от курсора
+        x = mouseX - rect.width - 15;
+    }
+    
+    // Проверяем нижнюю границу
+    if (y + rect.height > window.innerHeight - padding) {
+        // Размещаем выше курсора
+        y = mouseY - rect.height - 15;
+    }
+    
+    // Проверяем левую границу
+    if (x < padding) {
+        x = padding;
+    }
+    
+    // Проверяем верхнюю границу
+    if (y < padding) {
+        y = padding;
+    }
+
     tooltip.style.left = `${x}px`;
     tooltip.style.top = `${y}px`;
 };
