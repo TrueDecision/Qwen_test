@@ -169,3 +169,14 @@ window.closeChangesModal = function() {
     const overlay = document.getElementById('changes-modal');
     if (overlay) overlay.style.display = 'none';
 };
+
+// Модальное окно целей
+window.openGoalsModal = function() {
+    const overlay = document.getElementById('goals-modal');
+    if (overlay) overlay.style.display = 'flex';
+};
+
+window.closeGoalsModal = function() {
+    const overlay = document.getElementById('goals-modal');
+    if (overlay) overlay.style.display = 'none';
+};

@@ -59,6 +59,7 @@
                 <button id="back-btn" style="display:none; background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">← Back</button>
             </div>
             <div style="position:absolute; right:0; top:10px; display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content: flex-end;">
+                <button id="goals-btn" style="background: #334155; color: #4ade80; border: 1px solid #4ade80; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; transition: all 0.2s;" onclick="window.openGoalsModal()" onmouseenter="this.style.background='#475569'" onmouseleave="this.style.background='#334155'">🎯 GOALS</button>
                 <button id="changes-btn" style="background: #334155; color: #fbbf24; border: 1px solid #fbbf24; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; transition: all 0.2s;" onclick="window.openChangesModal()" onmouseenter="this.style.background='#475569'" onmouseleave="this.style.background='#334155'">📝 CHANGES</button>
                 <div style="color:#ef4444; font-weight:bold; font-size:10px; letter-spacing:1px; animation:pulse 2s infinite; white-space: nowrap;">⚠ EARLY ACCESS</div>
             </div>
@@ -147,6 +148,73 @@
                         <li>✓ Open champion → skill order background should be solid</li>
                         <li>✓ Check item names under icons → should be readable on mobile</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно целей -->
+    <div id="goals-modal" class="modal-overlay" onclick="if(event.target === this) window.closeGoalsModal()">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close" onclick="window.closeGoalsModal()">&times;</span>
+            <div class="modal-header">
+                <div style="font-size: 24px;">🎯</div>
+                <div>
+                    <h3 id="goals-title" class="modal-title">Project Goals</h3>
+                    <div id="goals-subtitle" class="modal-subtitle" style="color: #fbbf24;">Development Roadmap</div>
+                </div>
+            </div>
+            <div id="goals-body" class="modal-body" style="font-size: 13px; line-height: 1.8;">
+                <div style="margin-bottom: 15px;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
+                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                        <div>
+                            <strong style="color: #fbbf24;">Most Popular Build</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Core items with flexible 3rd slot options based on game situation</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
+                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                        <div>
+                            <strong style="color: #fbbf24;">Item Statistics</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Overall item stats per champion with win rates (complex build order logic)</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px; border: 1px solid #4ade80;">
+                        <div style="font-size: 16px; min-width: 20px;">✓</div>
+                        <div>
+                            <strong style="color: #4ade80;">Pro Games</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Recent high LP games on this champion</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
+                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                        <div>
+                            <strong style="color: #fbbf24;">OTP Games</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">10 games from top 2-3 OTP players per champion</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
+                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                        <div>
+                            <strong style="color: #fbbf24;">Deep Analytics</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Runes/items recommendations based on team compositions (complex)</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
+                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                        <div>
+                            <strong style="color: #fbbf24;">Player Analytics</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Account analysis: game history, win rates, OTPs, main champions</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
+                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                        <div>
+                            <strong style="color: #fbbf24;">Live Lobby Integration</strong>
+                            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Pull current game lobby data like Porofessor/OP.GG (needs testing)</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
