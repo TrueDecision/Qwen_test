@@ -111,7 +111,7 @@ async function extractSkillOrder(matchId, participantId) {
         });
 
         const skillOrder = {
-            byLevel: skillOrderByLevel.map(s => 
+            byLevel: skillOrderByLevel.map(s =>
                 s === 1 ? 'Q' : s === 2 ? 'W' : s === 3 ? 'E' : s === 4 ? 'R' : null
             ).filter(s => s),
             Q: [], W: [], E: [], R: []
@@ -127,6 +127,115 @@ async function extractSkillOrder(matchId, participantId) {
         });
 
         return skillOrder;
+    } catch (error) {
+        return null;
+    }
+}
+
+// === ИЗВЛЕЧЕНИЕ ПОРЯДКА ПОКУПКИ ПРЕДМЕТОВ ===
+async function extractItemPurchases(matchId, participantId) {
+    try {
+        const timeline = await riotRequest(
+            `https://${CONFIG.REGION_ROUTE}.api.riotgames.com/lol/match/v5/matches/${matchId}/timeline`
+        );
+
+        if (!timeline?.info?.frames) return null;
+
+        const purchaseEvents = [];
+        const startingItems = [];
+        let firstBackItems = [];
+        
+        // Собираем все события покупок
+        timeline.info.frames.forEach((frame, frameIndex) => {
+            if (frame.events) {
+                frame.events.forEach(event => {
+                    if ((event.type === 'ITEM_PURCHASED' || event.eventType === 'ITEM_PURCHASED') &&
+                        event.participantId === participantId) {
+                        
+                        const timestamp = event.timestamp || event.realTimestamp || 0;
+                        const minutes = Math.floor(timestamp / 60000);
+                        
+                        purchaseEvents.push({
+                            itemId: event.itemId,
+                            timestamp: timestamp,
+                            minutes: minutes,
+                            frame: frameIndex
+                        });
+                    }
+                });
+            }
+        });
+
+        // Сортируем по времени
+        purchaseEvents.sort((a, b) => a.timestamp - b.timestamp);
+
+        // Определяем стартовые предметы (купленные до 1:30 или первые 2-3 предмета)
+        const startingThreshold = 90000; // 1:30 в миллисекундах
+        const startingPurchases = purchaseEvents.filter(e => e.timestamp < startingThreshold);
+        
+        startingPurchases.forEach(e => {
+            if (!startingItems.includes(e.itemId)) {
+                startingItems.push(e.itemId);
+            }
+        });
+
+        // Если стартовых предметов меньше 2, добавляем первые покупки
+        if (startingItems.length < 2 && purchaseEvents.length > 0) {
+            purchaseEvents.slice(0, 3).forEach(e => {
+                if (!startingItems.includes(e.itemId)) {
+                    startingItems.push(e.itemId);
+                }
+            });
+        }
+
+        // Определяем первый возврат на базу (первая покупка после 3 минут)
+        const firstBackThreshold = 180000; // 3 минуты
+        const firstBackPurchases = purchaseEvents.filter(e => 
+            e.timestamp >= firstBackThreshold && e.timestamp < firstBackThreshold + 60000
+        );
+        
+        firstBackPurchases.forEach(e => {
+            if (!firstBackItems.includes(e.itemId)) {
+                firstBackItems.push(e.itemId);
+            }
+        });
+
+        // Полный порядок покупки полных предметов (исключая компоненты)
+        // Компоненты: 1001-1082, 2003-2055, 3000-3099 (частично)
+        const COMPONENT_IDS = new Set([
+            1001, 1004, 1006, 1011, 1018, 1026, 1027, 1028, 1029, 1031, 1033, 1036, 1037, 1038, 1042, 1043, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1082,
+            2003, 2031, 2033, 2055, 2138, 2139, 2140,
+            3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020, 3021, 3022, 3023, 3024, 3025, 3026, 3027, 3028, 3029, 3030, 3031, 3032, 3033, 3034, 3035, 3036, 3037, 3038, 3039, 3040, 3041, 3042, 3043, 3044, 3045, 3046, 3047, 3048, 3049, 3050, 3051, 3052, 3053, 3054, 3055, 3056, 3057, 3058, 3059, 3060, 3061, 3062, 3063, 3064, 3065, 3066, 3067, 3068, 3069, 3070, 3071, 3072, 3073, 3074, 3075, 3076, 3077, 3078, 3079, 3080, 3081, 3082, 3083, 3084, 3085, 3086, 3087, 3088, 3089, 3090, 3091, 3092, 3093, 3094, 3095, 3096, 3097, 3098, 3099
+        ]);
+
+        const fullItemPurchases = [];
+        const purchasedItems = new Set();
+        
+        purchaseEvents.forEach(e => {
+            // Пропускаем компоненты, варды и зелья
+            if (COMPONENT_IDS.has(e.itemId) || 
+                (e.itemId >= 2000 && e.itemId < 2200) ||  // Расходники
+                e.itemId === 3340 || e.itemId === 3364) {  // Trinkets
+                return;
+            }
+            
+            // Добавляем только уникальные полные предметы в порядке покупки
+            if (!purchasedItems.has(e.itemId)) {
+                purchasedItems.add(e.itemId);
+                fullItemPurchases.push({
+                    itemId: e.itemId,
+                    timestamp: e.timestamp,
+                    minutes: e.minutes
+                });
+            }
+        });
+
+        return {
+            startingItems,
+            firstBackItems,
+            fullItemOrder: fullItemPurchases.map(p => p.itemId),
+            itemPurchaseTimeline: fullItemPurchases
+        };
     } catch (error) {
         return null;
     }
@@ -290,10 +399,13 @@ async function collectData() {
                 
                 // Проверяем нужны ли ещё игры этому чемпиону
                 if (!needMoreGames(championId)) continue;
-                
+
                 // Извлекаем skill order
                 const skillOrder = await extractSkillOrder(matchId, participant.participantId);
                 
+                // Извлекаем порядок покупки предметов
+                const itemPurchases = await extractItemPurchases(matchId, participant.participantId);
+
                 // Создаём объект игры
                 const gameData = {
                     matchId,
@@ -324,7 +436,8 @@ async function collectData() {
                     },
                     cs: (participant.totalMinionsKilled || 0) + (participant.neutralMinionsKilled || 0),
                     gameDuration: (match.info.gameDuration || 0) * 1000,
-                    skillOrder
+                    skillOrder,
+                    itemPurchases  // Порядок покупки предметов
                 };
                 
                 // Добавляем в данные

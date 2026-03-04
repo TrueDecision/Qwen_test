@@ -628,6 +628,27 @@ function renderProBuilds(container, matches, champId) {
                             </div>
                         </div>
 
+                        <!-- Порядок покупки предметов -->
+                        ${match.itemPurchases?.itemPurchaseTimeline && match.itemPurchases.itemPurchaseTimeline.length > 0 ? `
+                        <div>
+                            <div style="font-size:11px; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Item Purchase Order</div>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                ${match.itemPurchases.itemPurchaseTimeline.map((purchase, idx) => {
+                                    const item = AppState.db.items[String(purchase.itemId)];
+                                    const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
+                                    const itemName = item ? item.name : '';
+                                    return `
+                                        <div style="display:flex; align-items:center; gap:8px; background:#1e293b; padding:4px 8px; border-radius:4px;">
+                                            <div style="font-size:9px; color:#64748b; min-width:35px;">${purchase.minutes}:00</div>
+                                            <img src="${itemImg}" style="width:24px; height:24px; border-radius:4px;" title="${itemName}">
+                                            <div style="font-size:10px; color:#cbd5e1;">${itemName}</div>
+                                        </div>
+                                    `;
+                                }).slice(0, 8).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+
                         <!-- Полные предметы -->
                         <div>
                             <div style="font-size:11px; color:#64748b; margin-bottom:8px; text-transform:uppercase;">Full Build</div>

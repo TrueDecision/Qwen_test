@@ -212,6 +212,7 @@ Object.entries(testData).forEach(([champId, roles]) => {
                     cs: game.cs || 0,
                     gameDuration: game.gameDuration || 0,
                     skillOrder: game.skillOrder,
+                    itemPurchases: game.itemPurchases,  // Порядок покупки предметов
                     tier: 'Master+'
                 });
             }
