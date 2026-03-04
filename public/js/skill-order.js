@@ -250,13 +250,13 @@ export function renderSkillsTable(champKey, role = 'TOP', builds = null, buildIn
     if (spells[2]) bodyRows += generateRow(spells[2], 'E', 'row-e', skillLevelOrder['E']);
     if (spells[3]) bodyRows += generateRow(spells[3], 'R', 'row-r', skillLevelOrder['R']);
 
-    const patternName = champType === 'STANDARD' ? 'Q Max' : 
+    const patternName = champType === 'STANDARD' ? 'Q Max' :
                         champType === 'SUPPORT' ? 'E Max (Support)' :
                         champType === 'TANK' ? 'E/W Max (Tank)' : 'Custom';
 
     return `
-    <div class="skill-table-container">
-        <table class="skill-table">
+    <div class="skill-table-container" style="overflow-x: auto;">
+        <table class="skill-table" style="min-width: 500px;">
             <thead>${headerRow}</thead>
             <tbody>${bodyRows}</tbody>
         </table>

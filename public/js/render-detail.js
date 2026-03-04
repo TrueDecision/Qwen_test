@@ -307,15 +307,17 @@ export function renderChampionDetail(champ, currentRoleKey, buildIndex = 0) {
                                     const item = AppState.db.items[String(id)];
                                     const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
                                     const itemName = item ? item.name : '';
+                                    const itemDesc = item ? item.desc : '';
                                     const freqInfo = freqAnalysis?.items?.find(f => f.id === id);
                                     const freqPercent = freqInfo ? freqInfo.percent : null;
+                                    const isBoots = freqAnalysis?.boots?.some(b => b.id === id);
 
                                     return `
                                         <div style="display:flex; align-items:center; gap:4px;">
                                             <div style="text-align:center; position:relative;"
-                                                onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '${freqPercent ? freqPercent + '% pick rate' : ''}')"
+                                                onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '${itemDesc ? itemDesc.replace(/'/g, "\\'") : ''}')"
                                                 onmouseleave="window.hideTooltip()">
-                                                <img src="${itemImg}" style="width:36px; height:36px; border-radius:4px; border:1px solid #475569;">
+                                                <img src="${itemImg}" style="width:36px; height:36px; border-radius:4px; border:${isBoots ? '2px solid #fbbf24' : '1px solid #475569'};">
                                                 ${freqPercent ? `<div style="font-size:8px; color:#64748b; text-align:center; margin-top:2px;">${freqPercent}%</div>` : ''}
                                             </div>
                                             ${idx < nonBootsItems.length - 1 ? arrow : ''}
@@ -333,13 +335,14 @@ export function renderChampionDetail(champ, currentRoleKey, buildIndex = 0) {
                                 const item = AppState.db.items[String(id)];
                                 const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
                                 const itemName = item ? item.name : '';
+                                const itemDesc = item ? item.desc : '';
                                 const bootInfo = freqAnalysis?.boots?.find(b => b.id === id);
                                 const freqPercent = bootInfo ? bootInfo.percent : null;
-                                
+
                                 return `
                                     <div style="display:flex; align-items:center; gap:4px;">
                                         <div style="text-align:center; position:relative;"
-                                            onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '${freqPercent ? freqPercent + '% pick rate' : ''}')"
+                                            onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '${itemDesc ? itemDesc.replace(/'/g, "\\'") : ''}')"
                                             onmouseleave="window.hideTooltip()">
                                             <img src="${itemImg}" style="width:36px; height:36px; border-radius:4px; border:2px solid #fbbf24;">
                                             ${freqPercent ? `<div style="font-size:8px; color:#64748b; text-align:center; margin-top:2px;">${freqPercent}%</div>` : ''}
