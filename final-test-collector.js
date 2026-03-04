@@ -297,6 +297,8 @@ async function collectData() {
                 // Создаём объект игры
                 const gameData = {
                     matchId,
+                    puuid,
+                    summonerName,
                     championId,
                     role,
                     win: participant.win,

@@ -196,8 +196,10 @@ Object.entries(testData).forEach(([champId, roles]) => {
             if (champData.matches.length < 100) {
                 champData.matches.push({
                     matchId: game.matchId,
-                    puuid: 'unknown',
-                    summonerName: 'Summoner',
+                    puuid: game.puuid || 'unknown',
+                    summonerName: game.summonerName || 'Pro Player',
+                    playerRank: game.rank || 'Master+',
+                    playerTier: 'MASTER',
                     role,
                     win: game.win,
                     items: game.items,

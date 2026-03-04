@@ -523,6 +523,9 @@ function renderProBuilds(container, matches, champId) {
         // gameDuration приходит в миллисекундах, конвертируем в минуты
         const duration = Math.round((match.gameDuration || 0) / 60000);
 
+        // Стартовые предметы (первые 2-3)
+        const startingItems = (match.items || []).slice(0, 3);
+
         // Иконка кестоуна
         const keystoneId = match.perks?.keystone;
         const keystoneIcon = keystoneId && AppState.db.runes[String(keystoneId)]
@@ -610,6 +613,21 @@ function renderProBuilds(container, matches, champId) {
                 <!-- Раскрывающаяся детальная информация -->
                 <div id="pro-match-detail-${idx}" style="display:none; padding:16px; background:#0f172a; border-bottom:1px solid #334155;">
                     <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                        <!-- Стартовые предметы -->
+                        <div>
+                            <div style="font-size:11px; color:#94a3b8; margin-bottom:8px; text-transform:uppercase;">Starting Items</div>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                ${startingItems.map(itemId => {
+                                    const item = AppState.db.items[String(itemId)];
+                                    const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
+                                    const itemName = item ? item.name : '';
+                                    return itemImg
+                                        ? `<img src="${itemImg}" style="width:32px; height:32px; border-radius:4px; border:1px solid #fbbf24;" title="${itemName}">`
+                                        : '';
+                                }).join('')}
+                            </div>
+                        </div>
+
                         <!-- Полные предметы -->
                         <div>
                             <div style="font-size:11px; color:#64748b; margin-bottom:8px; text-transform:uppercase;">Full Build</div>
@@ -620,9 +638,9 @@ function renderProBuilds(container, matches, champId) {
                                     const itemName = item ? item.name : '';
                                     const itemDesc = item ? item.desc : '';
                                     return itemImg
-                                        ? `<div style="text-align:center; cursor:pointer;" 
+                                        ? `<div style="text-align:center; cursor:pointer;"
                                             onclick="window.openDetailModal('pro_match_item', null, {img: '${itemImg}', name: '${itemName.replace(/'/g, "\\'")}', desc: '${itemDesc.replace(/'/g, "\\'")}'})"
-                                            onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '')" 
+                                            onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '')"
                                             onmouseleave="window.hideTooltip()">
                                             <img src="${itemImg}" style="width:32px; height:32px; border-radius:4px; border:1px solid #475569;">
                                            </div>`
