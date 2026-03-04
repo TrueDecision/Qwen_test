@@ -51,21 +51,23 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <div id="app">
-        <header style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; position: relative; min-height: 60px;">
+        <!-- Верхняя панель с кнопками -->
+        <div style="position: fixed; top: 0; left: 0; right: 0; height: 35px; background: #0f172a; border-bottom: 1px solid #334155; z-index: 1000; display: flex; align-items: center; justify-content: flex-end; padding: 0 15px; gap: 8px;">
+            <button id="goals-btn" style="background: #334155; color: #4ade80; border: 1px solid #4ade80; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; transition: all 0.2s;" onclick="window.openGoalsModal()" onmouseenter="this.style.background='#475569'" onmouseleave="this.style.background='#334155'">🎯 GOALS</button>
+            <button id="changes-btn" style="background: #334155; color: #fbbf24; border: 1px solid #fbbf24; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; transition: all 0.2s;" onclick="window.openChangesModal()" onmouseenter="this.style.background='#475569'" onmouseleave="this.style.background='#334155'">📝 CHANGES</button>
+            <div style="color:#ef4444; font-weight:bold; font-size:10px; letter-spacing:1px; animation:pulse 2s infinite; white-space: nowrap;">⚠ EARLY ACCESS</div>
+        </div>
+
+        <header style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; padding-top: 45px; position: relative;">
             <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; flex: 1;">
                 <h1 id="page-title" style="margin: 0; font-size: 24px;">LoL Stats EUW</h1>
                 <div id="header-meta" style="color: #94a3b8; font-size: 14px;">Loading...</div>
                 <span id="status-flag" class="status-flag" style="font-size: 12px;">⚪</span>
                 <button id="back-btn" style="display:none; background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">← Back</button>
             </div>
-            <div style="position:absolute; right:0; top:10px; display:flex; gap:8px; align-items:center; flex-wrap: wrap; justify-content: flex-end;">
-                <button id="goals-btn" style="background: #334155; color: #4ade80; border: 1px solid #4ade80; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; transition: all 0.2s;" onclick="window.openGoalsModal()" onmouseenter="this.style.background='#475569'" onmouseleave="this.style.background='#334155'">🎯 GOALS</button>
-                <button id="changes-btn" style="background: #334155; color: #fbbf24; border: 1px solid #fbbf24; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; transition: all 0.2s;" onclick="window.openChangesModal()" onmouseenter="this.style.background='#475569'" onmouseleave="this.style.background='#334155'">📝 CHANGES</button>
-                <div style="color:#ef4444; font-weight:bold; font-size:10px; letter-spacing:1px; animation:pulse 2s infinite; white-space: nowrap;">⚠ EARLY ACCESS</div>
-            </div>
         </header>
 
-        <main>
+        <main style="padding-top: 10px;">
             <div id="view-list">
                 <!-- Фильтры и поиск -->
                 <div style="margin-bottom:15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
