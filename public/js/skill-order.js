@@ -232,7 +232,7 @@ export function renderSkillsTable(champKey, role = 'TOP', builds = null, buildIn
 
         return `
         <tr class="${rowClass}">
-            <td style="text-align:left; padding:6px;">
+            <td style="text-align:left; padding:6px; background:#1e293b;">
                 <div style="display:flex; align-items:center; gap:6px; cursor:pointer;"
                      onclick="window.openDetailModal('champion_skill', null, ${JSON.stringify({...spell, key}).replace(/"/g, '&quot;')})">
                     <img src="${img}" style="width:22px; height:22px; border-radius:4px; border:1px solid #475569;">

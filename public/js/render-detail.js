@@ -219,10 +219,10 @@ export function renderChampionDetail(champ, currentRoleKey, buildIndex = 0) {
             
             let htmlPart = `<div style="display:flex; align-items:center;">`;
             htmlPart += `<div style="text-align:center; position:relative;">
-                <img src="${url}" style="width:34px; height:34px; background:#333; border:1px solid #475569; border-radius:4px; cursor:pointer;" 
+                <img src="${url}" style="width:36px; height:36px; background:#333; border:1px solid #475569; border-radius:4px; cursor:pointer;"
                      onclick="window.openDetailModal('item', '${id}')"
                      onmouseenter="(e) => window.showTooltip(e, '${name.replace(/'/g, "\\'")}', '${desc.replace(/'/g, "\\'")}') " onmouseleave="window.hideTooltip()" onerror="this.style.background='#500'">
-                <div style="font-size:9px; color:#888; margin-top:2px; max-width:40px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${name}</div>
+                <div style="font-size:11px; color:#cbd5e1; margin-top:3px; max-width:45px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${name}</div>
             </div>`;
             
             if (!isLast) {

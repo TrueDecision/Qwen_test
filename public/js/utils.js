@@ -62,9 +62,31 @@ window.openDetailModal = function(type, id, data) {
         if (!item) return;
         title = item.name;
         subtitle = `Item ID: ${id}`;
-        desc = item.desc;
         imgSrc = `${CONFIG.DDRAGON_BASE}/img/item/${item.file}`;
         stats = item.stats || '';
+        
+        // Разделяем описание на характеристики и пассивный эффект
+        const itemDesc = item.desc || '';
+        const passiveMatch = itemDesc.match(/<passive>|<unique passive>|<active>|<unique active>/i);
+        
+        if (passiveMatch) {
+            const splitIndex = itemDesc.toLowerCase().indexOf(passiveMatch[0].replace(/<|>/g, ''));
+            if (splitIndex > 0) {
+                const statsPart = itemDesc.substring(0, splitIndex).trim();
+                const passivePart = itemDesc.substring(splitIndex).trim();
+                
+                // Форматируем характеристики (заменяем <br> на переносы)
+                const formattedStats = statsPart.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '');
+                // Форматируем пассивный эффект
+                const formattedPassive = passivePart.replace(/<br>/g, '\n').replace(/<[^>]*>?/gm, '');
+                
+                desc = `<div style="margin-bottom:12px;"><strong style="color:#fbbf24;">⚡ Stats:</strong><div style="color:#cbd5e1; margin-top:6px; line-height:1.6;">${formattedStats}</div></div><div style="border-top:1px solid #334155; padding-top:12px;"><strong style="color:#fbbf24;">✨ Passive:</strong><div style="color:#cbd5e1; margin-top:6px; line-height:1.6;">${formattedPassive}</div></div>`;
+            } else {
+                desc = itemDesc.replace(/<br>/g, '<br/>');
+            }
+        } else {
+            desc = itemDesc.replace(/<br>/g, '<br/>');
+        }
     } else if (type === 'rune') {
         const rune = AppState.db.runes[id];
         if (!rune) return;

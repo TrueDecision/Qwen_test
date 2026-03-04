@@ -24,8 +24,8 @@ const CONFIG = {
     RIOT_API_KEY: process.env.RIOT_API_KEY,
     REGION: 'euw1',
     REGION_ROUTE: 'europe',
-    GAMES_PER_CHAMPION: 10,  // 10 игр на чемпиона
-    REQUEST_DELAY_MS: 2000,
+    GAMES_PER_CHAMPION: 100,  // 100 игр на чемпиона
+    REQUEST_DELAY_MS: 1500,   // Уменьшил задержку для скорости
     REQUEST_TIMEOUT_MS: 20000,
     OUTPUT_FILE: path.join(__dirname, 'cache', 'final-test-data.json'),
     PROGRESS_FILE: path.join(__dirname, 'cache', 'final-test-progress.json')
@@ -170,9 +170,14 @@ function loadProgress() {
         try {
             progress = JSON.parse(fs.readFileSync(CONFIG.PROGRESS_FILE, 'utf8'));
             console.log(`📊 Progress loaded: ${Object.keys(progress.championGames).length} champions`);
+            
+            // СБРОС прогресса чемпионов для нового сбора
+            // Оставляем только processedPuuids (чтобы не дублировать игроков)
+            console.log(`🔄 Resetting champion games for new collection...`);
+            progress.championGames = {};
         } catch (e) {}
     }
-    
+
     if (fs.existsSync(CONFIG.OUTPUT_FILE)) {
         try {
             collectedData = JSON.parse(fs.readFileSync(CONFIG.OUTPUT_FILE, 'utf8'));
