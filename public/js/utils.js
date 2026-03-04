@@ -128,3 +128,14 @@ window.closeDetailModal = function() {
     const overlay = document.getElementById('detail-modal');
     if (overlay) overlay.style.display = 'none';
 };
+
+// Модальное окно изменений
+window.openChangesModal = function() {
+    const overlay = document.getElementById('changes-modal');
+    if (overlay) overlay.style.display = 'flex';
+};
+
+window.closeChangesModal = function() {
+    const overlay = document.getElementById('changes-modal');
+    if (overlay) overlay.style.display = 'none';
+};

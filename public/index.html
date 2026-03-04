@@ -56,7 +56,10 @@
             <div id="header-meta" style="color: #94a3b8; font-size: 14px;">Loading...</div>
             <span id="status-flag" class="status-flag" style="font-size: 12px;">⚪</span>
             <button id="back-btn" style="display:none; background: #334155; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">← Back</button>
-            <div style="position:absolute; right:0; top:10px; color:#ef4444; font-weight:bold; font-size:11px; letter-spacing:1px; animation:pulse 2s infinite;">⚠ EARLY ACCESS</div>
+            <div style="position:absolute; right:0; top:10px; display:flex; gap:8px; align-items:center;">
+                <button id="changes-btn" style="background: #334155; color: #fbbf24; border: 1px solid #fbbf24; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; letter-spacing: 0.5px; transition: all 0.2s;" onclick="window.openChangesModal()" onmouseenter="this.style.background='#475569'" onmouseleave="this.style.background='#334155'">📝 CHANGES</button>
+                <div style="color:#ef4444; font-weight:bold; font-size:10px; letter-spacing:1px; animation:pulse 2s infinite;">⚠ EARLY ACCESS</div>
+            </div>
         </header>
 
         <main>
@@ -82,6 +85,70 @@
 
     <!-- Тултип -->
     <div id="game-tooltip" class="tooltip-box"></div>
+
+    <!-- Модальное окно изменений -->
+    <div id="changes-modal" class="modal-overlay" onclick="if(event.target === this) window.closeChangesModal()">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close" onclick="window.closeChangesModal()">&times;</span>
+            <div class="modal-header">
+                <div style="font-size: 24px;">📝</div>
+                <div>
+                    <h3 id="changes-title" class="modal-title">Latest Changes</h3>
+                    <div id="changes-subtitle" class="modal-subtitle" style="color: #fbbf24;">Version 1.1.0 - 2026-03-04</div>
+                </div>
+            </div>
+            <div id="changes-body" class="modal-body" style="font-size: 13px; line-height: 1.8;">
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #fbbf24;">🎨 Item Display Improvements:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
+                        <li>Item descriptions now split into <strong>⚡ Stats</strong> and <strong>✨ Passive</strong> sections</li>
+                        <li>Visual separator between stats and passive effects</li>
+                        <li>Gold-colored headers for better navigation</li>
+                    </ul>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #fbbf24;">💡 Item Tooltips:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
+                        <li>Hover over any item to see quick stats and description</li>
+                        <li>Click to open full item details modal</li>
+                    </ul>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #fbbf24;">⚠️ Exclusive Items Logic:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
+                        <li>Added validation for mutually exclusive items</li>
+                        <li>8 item groups: Boots, Tiamat, Sheen, Stormrazor, Hydra, Support, Jungle, Crown</li>
+                        <li>Prevents showing invalid item combinations</li>
+                    </ul>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #fbbf24;">📱 Mobile UI Improvements:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
+                        <li>Larger item icons (36px)</li>
+                        <li>Bigger font size (11px) for better readability</li>
+                        <li>Improved text contrast (#cbd5e1)</li>
+                    </ul>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #fbbf24;">🎯 Skill Order Table:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
+                        <li>Fixed transparent background issue</li>
+                        <li>Skill icons now have solid background (#1e293b)</li>
+                        <li>No more overlapping skill points</li>
+                    </ul>
+                </div>
+                <div style="border-top: 1px solid #334155; padding-top: 15px; margin-top: 20px;">
+                    <strong style="color: #4ade80;">✅ Testing Checklist:</strong>
+                    <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
+                        <li>✓ Click on any item → should open detailed modal with Stats/Passive sections</li>
+                        <li>✓ Hover over item → tooltip should appear</li>
+                        <li>✓ Open champion → skill order background should be solid</li>
+                        <li>✓ Check item names under icons → should be readable on mobile</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Модальное окно (HTML шаблон) -->
     <div id="detail-modal" class="modal-overlay" onclick="if(event.target === this) window.closeDetailModal()">
