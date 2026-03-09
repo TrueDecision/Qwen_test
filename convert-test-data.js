@@ -90,123 +90,161 @@ function getTopN(freqObj, n) {
 }
 
 // ============================================================================
-// АНАЛИЗ РУН (ИЕРАРХИЧЕСКИЙ ПОДХОД)
+// АНАЛИЗ БИЛДА (КАСКАДНЫЙ ПОДХОД)
 // ============================================================================
+// Приоритет: Руны → Заклинания → Предметы → Скиллы
+// Каждый следующий шаг фильтрует игры по предыдущему выбору
 
-function analyzeRunes(games) {
-    try {
-        if (!games || games.length === 0) return null;
+function analyzeBuild(games, role) {
+    if (!games || games.length === 0) return null;
 
-        // Извлекаем perks из игр, правильно обрабатывая структуру
-        const perksList = games.map(g => {
-            const perks = g.perks;
-            if (!perks || !perks.primary) {
-                return null;
-            }
-            return {
-                primary: perks.primary,
-                keystone: perks.keystone,
-                sub: perks.sub,
-                // primaryRunes может быть массивом объектов или чисел
-                primaryRunes: Array.isArray(perks.primaryRunes)
-                    ? perks.primaryRunes.map(r => typeof r === 'object' ? r.perk : r)
-                    : [],
-                // secondaryRunes может быть массивом объектов или чисел
-                secondaryRunes: Array.isArray(perks.secondaryRunes)
-                    ? perks.secondaryRunes.map(r => typeof r === 'object' ? r.perk : r)
-                    : [],
-                shards: perks.shards || []
-            };
-        }).filter(p => p && p.primary);
+    let filteredGames = [...games];
+    const result = {
+        perks: null,
+        summoners: null,
+        items: null,
+        skillOrder: null
+    };
 
-        if (perksList.length === 0) return null;
-
-        // ШАГ 1: Найти самое популярное Основное древо
+    // =========================================================================
+    // ШАГ 1: РУНЫ (самое популярное древо + кестоун)
+    // =========================================================================
+    const perksList = filteredGames.map(g => g.perks).filter(p => p && p.primary);
+    if (perksList.length > 0) {
+        // Находим самое популярное древо
         const primaryTreeCounts = countFrequency(perksList, p => p.primary);
         const [mostPopularPrimaryTree] = getTopN(primaryTreeCounts, 1);
         const primaryTreeId = mostPopularPrimaryTree ? parseInt(mostPopularPrimaryTree[0]) : perksList[0].primary;
 
-        // Фильтруем игры с этим основным древом
+        // Фильтруем игры по древу
         const gamesWithPrimaryTree = perksList.filter(p => p.primary === primaryTreeId);
-        if (gamesWithPrimaryTree.length === 0) return null;
 
-        // ШАГ 2: Среди игр с этим древом найти самый популярный Краеугольный камень
+        // Находим самый популярный кестоун
         const keystoneCounts = countFrequency(gamesWithPrimaryTree, p => p.keystone);
         const [mostPopularKeystone] = getTopN(keystoneCounts, 1);
         const keystoneId = mostPopularKeystone ? parseInt(mostPopularKeystone[0]) : gamesWithPrimaryTree[0].keystone;
 
-        // Фильтруем игры с этим кестоуном
-        const gamesWithKeystone = gamesWithPrimaryTree.filter(p => p.keystone === keystoneId);
-        if (gamesWithKeystone.length === 0) return null;
+        // Фильтруем игры по древу + кестоуну
+        filteredGames = games.filter(g => 
+            g.perks?.primary === primaryTreeId && g.perks?.keystone === keystoneId
+        );
 
-        // ШАГ 3: Найти самые популярные малые руны для основной ветки (по слотам)
-        const runeSlotCounts = [[], [], [], []];
-        gamesWithKeystone.forEach(p => {
-            const runes = p.primaryRunes || [];
-            runes.forEach((runeId, idx) => {
-                if (idx < 4 && runeId) {
-                    runeSlotCounts[idx][runeId] = (runeSlotCounts[idx][runeId] || 0) + 1;
-                }
-            });
-        });
-
-        const primaryRunes = [
-            keystoneId,
-            ...runeSlotCounts.slice(1, 4).map(slotCounts => {
-                const top = getTopN(slotCounts, 1)[0];
-                return top ? parseInt(top[0]) : 0;
-            })
-        ];
-
-        // ШАГ 4: Найти самую популярную вторичную ветку
-        const subTreeCounts = countFrequency(gamesWithKeystone, p => p.sub);
-        const [mostPopularSubTree] = getTopN(subTreeCounts, 1);
-        const subTreeId = mostPopularSubTree ? parseInt(mostPopularSubTree[0]) : (gamesWithKeystone[0].sub || 0);
-
-        const gamesWithSubTree = gamesWithKeystone.filter(p => p.sub === subTreeId);
-
-        // ШАГ 5: Найти самые популярные руны во вторичной ветке (топ-2)
-        let secondaryRunes = [];
-        if (gamesWithSubTree && gamesWithSubTree.length > 0) {
-            const secondaryRuneCounts = {};
-            gamesWithSubTree.forEach(p => {
-                (p.secondaryRunes || []).forEach(runeId => {
-                    if (runeId) {
-                        secondaryRuneCounts[runeId] = (secondaryRuneCounts[runeId] || 0) + 1;
+        // Собираем полные руны из отфильтрованных игр
+        const filteredPerksList = filteredGames.map(g => g.perks).filter(p => p && p.primary);
+        if (filteredPerksList.length > 0) {
+            // Малые руны по слотам
+            const runeSlotCounts = [[], [], [], []];
+            filteredPerksList.forEach(p => {
+                const runes = p.primaryRunes || [];
+                runes.forEach((runeId, idx) => {
+                    if (idx < 4 && runeId) {
+                        runeSlotCounts[idx][runeId] = (runeSlotCounts[idx][runeId] || 0) + 1;
                     }
                 });
             });
-            const topSecondary = getTopN(secondaryRuneCounts, 2);
-            secondaryRunes = topSecondary.map(x => parseInt(x[0]));
-        }
 
-        // ШАГ 6: Найти самые популярные адаптивные бонусы (3 ячейки)
-        const shardCounts = [[], [], []];
-        gamesWithKeystone.forEach(p => {
-            const shards = p.shards || [];
-            shards.forEach((shardId, idx) => {
-                if (idx < 3 && shardId) {
-                    shardCounts[idx][shardId] = (shardCounts[idx][shardId] || 0) + 1;
-                }
+            const primaryRunes = [
+                keystoneId,
+                ...runeSlotCounts.slice(1, 4).map(slotCounts => {
+                    const top = getTopN(slotCounts, 1)[0];
+                    return top ? parseInt(top[0]) : 0;
+                })
+            ];
+
+            // Вторичная ветка
+            const subTreeCounts = countFrequency(filteredPerksList, p => p.sub);
+            const [mostPopularSubTree] = getTopN(subTreeCounts, 1);
+            const subTreeId = mostPopularSubTree ? parseInt(mostPopularSubTree[0]) : (filteredPerksList[0].sub || 0);
+
+            // Фильтруем по вторичной ветке
+            filteredGames = filteredGames.filter(g => 
+                g.perks?.sub === subTreeId
+            );
+
+            const filteredSubPerks = filteredGames.map(g => g.perks).filter(p => p && p.sub);
+            let secondaryRunes = [];
+            if (filteredSubPerks.length > 0) {
+                const secondaryRuneCounts = {};
+                filteredSubPerks.forEach(p => {
+                    (p.secondaryRunes || []).forEach(runeId => {
+                        if (runeId) secondaryRuneCounts[runeId] = (secondaryRuneCounts[runeId] || 0) + 1;
+                    });
+                });
+                const topSecondary = getTopN(secondaryRuneCounts, 2);
+                secondaryRunes = topSecondary.map(x => parseInt(x[0]));
+            }
+
+            // Адаптивные бонусы
+            const shardCounts = [[], [], []];
+            filteredPerksList.forEach(p => {
+                const shards = p.shards || [];
+                shards.forEach((shardId, idx) => {
+                    if (idx < 3 && shardId) {
+                        shardCounts[idx][shardId] = (shardCounts[idx][shardId] || 0) + 1;
+                    }
+                });
             });
-        });
 
-        const shards = shardCounts.map(slotCounts => {
-            const top = getTopN(slotCounts, 1)[0];
-            return top ? parseInt(top[0]) : 0;
-        });
+            const shards = shardCounts.map(slotCounts => {
+                const top = getTopN(slotCounts, 1)[0];
+                return top ? parseInt(top[0]) : 0;
+            });
 
-        return {
-            primary: parseInt(primaryTreeId),
-            keystone: parseInt(keystoneId),
-            primaryRunes: primaryRunes.map(x => parseInt(x)),
-            sub: parseInt(subTreeId),
-            secondaryRunes: secondaryRunes,
-            shards: shards
-        };
-    } catch (error) {
-        return null;
+            result.perks = {
+                primary: primaryTreeId,
+                keystone: keystoneId,
+                primaryRunes: primaryRunes.map(x => parseInt(x)),
+                sub: subTreeId,
+                secondaryRunes: secondaryRunes,
+                shards: shards
+            };
+        }
     }
+
+    // =========================================================================
+    // ШАГ 2: ЗАКЛИНАНИЯ (самая популярная пара среди отфильтрованных игр)
+    // =========================================================================
+    if (filteredGames.length > 0) {
+        const summonerPairs = {};
+        filteredGames.forEach(game => {
+            const s1 = game.summoners?.[0] || game.summoner1;
+            const s2 = game.summoners?.[1] || game.summoner2;
+            if (s1 && s2) {
+                const pair = [s1, s2].sort().join('-');
+                summonerPairs[pair] = (summonerPairs[pair] || 0) + 1;
+            }
+        });
+
+        const [topPair] = getTopN(summonerPairs, 1);
+        if (topPair) {
+            const [s1, s2] = topPair[0].split('-').map(x => parseInt(x));
+            result.summoners = { summoner1: s1, summoner2: s2 };
+
+            // Фильтруем игры по заклинаниям
+            filteredGames = filteredGames.filter(g => {
+                const spells = [g.summoners?.[0] || g.summoner1, g.summoners?.[1] || g.summoner2].sort();
+                return spells[0] === s1 && spells[1] === s2;
+            });
+        } else if (role === 'JUNGLE') {
+            result.summoners = { summoner1: 11, summoner2: 4 };
+        } else {
+            result.summoners = { summoner1: 4, summoner2: 14 };
+        }
+    } else {
+        result.summoners = role === 'JUNGLE' ? { summoner1: 11, summoner2: 4 } : { summoner1: 4, summoner2: 14 };
+    }
+
+    // =========================================================================
+    // ШАГ 3: ПРЕДМЕТЫ (самые популярные среди отфильтрованных игр)
+    // =========================================================================
+    result.items = analyzeItems(filteredGames, role);
+
+    // =========================================================================
+    // ШАГ 4: СКИЛЛЫ (самый популярный порядок среди отфильтрованных игр)
+    // =========================================================================
+    result.skillOrder = analyzeSkillOrders(filteredGames);
+
+    return result;
 }
 
 // ============================================================================
@@ -577,25 +615,16 @@ Object.entries(testData).forEach(([champId, roles]) => {
             if (game.win) roleWins++;
         });
 
-        // === ИЕРАРХИЧЕСКИЙ АНАЛИЗ ===
-        
-        // 1. Анализ рун
-        const runes = analyzeRunes(games);
-
-        // 2. Анализ предметов
-        const items = analyzeItems(games, role);
-
-        // 3. Анализ призывных заклинаний
-        const summoners = analyzeSummoners(games, role);
-
-        // 4. Анализ прокачки скиллов
-        const skillOrder = analyzeSkillOrders(games);
+        // === КАСКАДНЫЙ АНАЛИЗ БИЛДА ===
+        // Приоритет: Руны → Заклинания → Предметы → Скиллы
+        const build = analyzeBuild(games, role);
 
         // === СОЗДАЁМ БИЛД ДЛЯ РОЛИ ===
         const builds = {};
         const buildKey = 'typical';
 
         // Создаём дозаполненный skill order для билда
+        const skillOrder = build?.skillOrder;
         const filledSkillOrder = skillOrder ? {
             byLevel: skillOrder.byLevel || [],
             Q: [], W: [], E: [], R: []
@@ -611,17 +640,17 @@ Object.entries(testData).forEach(([champId, roles]) => {
         builds[buildKey] = {
             games: roleGames,
             wins: roleWins,
-            items: items?.finalBuildOrder || [],
-            summoner1: summoners.summoner1,
-            summoner2: summoners.summoner2,
-            perks: runes || {},
-            skillOrders: filledSkillOrder ? [filledSkillOrder] : [],  // Используем дозаполненный skill order
+            items: build?.items?.finalBuildOrder || [],
+            summoner1: build?.summoners?.summoner1 || 4,
+            summoner2: build?.summoners?.summoner2 || 14,
+            perks: build?.perks || {},
+            skillOrders: filledSkillOrder ? [filledSkillOrder] : [],
             skillPriority: skillOrder?.skillPriority || [],
-            frequencyAnalysis: items ? {
-                startingItems: items.startingItems,
-                coreBuildOrder: items.coreBuildOrder,
-                boots: items.boots,
-                items: items.items
+            frequencyAnalysis: build?.items ? {
+                startingItems: build.items.startingItems,
+                coreBuildOrder: build.items.coreBuildOrder,
+                boots: build.items.boots,
+                items: build.items.items
             } : null
         };
 
