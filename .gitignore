@@ -3,4 +3,5 @@ node_modules
 *.log
 .qwen
 .vscode
-*.bat
+cache/*.json
+!cache/full-analytics-stats.json

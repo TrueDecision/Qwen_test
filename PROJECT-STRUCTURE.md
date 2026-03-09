@@ -1,129 +1,139 @@
-# 🚀 LoL Stats EUW - Project Structure
+# 📁 LoL Stats EUW - Project Structure
 
-## 📁 Финальная структура (после очистки)
+## 🗂️ Файловая структура
 
 ```
 c:\project/
-├── .env                        ← Конфигурация (API ключ, настройки)
-├── .git/                       ← Git репозиторий
-├── .gitignore                  ← Git ignore правила
-├── cache/                      ← Данные (кэш)
-│   ├── full-analytics-stats.json    (~119 MB) — Основная статистика
-│   ├── skill-orders.json            (~2.6 MB) — Skill orders
-│   ├── full-analytics-dedup.json    (~1.9 MB) — Дедупликация
-│   ├── full-analytics-progress.json (~90 KB) — Прогресс сбора
-│   ├── skill-order-progress.json    (~253 KB) — Прогресс skill orders
-│   ├── full-analytics-tier-cache.json (~151 KB) — Кэш тиров
-│   ├── full-analytics-ranks.json    (~2 bytes) — Кэш рангов
-│   ├── ranks-cache.json             (~5 KB) — Кэш рангов
-│   └── collector-progress.json      (~11 KB) — Старый прогресс
-├── node_modules/               ← Зависимости npm
-├── public/                     ← Frontend
-│   ├── index.html              ← Главная страница
-│   ├── styles.css              ← Стили
-│   ├── ddragon/                ← DataDragon (ассеты)
-│   └── js/
-│       ├── config.js           ← Конфигурация frontend
-│       ├── state.js            ← Глобальное состояние
-│       ├── utils.js            ← Утилиты
-│       ├── data-loader.js      ← Загрузка данных
-│       ├── skill-order.js      ← Skill order логика
-│       ├── render-skills.js    ← Рендер навыков
-│       ├── render-runes.js     ← Рендер рун
-│       ├── render-detail.js    ← Рендер карточки чемпиона
-│       ├── render-list.js      ← Рендер списка чемпионов
-│       └── main.js             ← Точка входа
-├── server.js                   ← API сервер (Express)
-├── unified-collector.js        ← Сбор данных (статистика + skill order)
-├── DEPLOYMENT-FINAL.md         ← Документация по деплою
-├── package.json                ← Зависимости npm
-└── package-lock.json           ← Locked версии зависимостей
+│
+├── 📄 server.js                      # Express сервер для Vercel
+├── 📄 final-test-collector.js        # Сборщик данных (100 игр/чемпион)
+├── 📄 convert-test-data.js           # Конвертер в формат сервера
+├── 📄 package.json                   # Зависимости npm
+├── 📄 vercel.json                    # Конфигурация Vercel
+├── 📄 .env                           # Riot API ключ (НЕ КОММИТИТЬ!)
+├── 📄 .gitignore                     # Git исключения
+├── 📄 .vercelignore                  # Vercel исключения
+│
+├── 📁 public/                        # Статические файлы для Vercel
+│   ├── index.html                    # Главная страница
+│   ├── styles.css                    # Стили
+│   ├── script.js                     # Скрипты (если есть)
+│   ├── ddragon/                      # DataDragon assets
+│   │   ├── img/                      # Изображения
+│   │   └── data/                     # JSON данные
+│   └── js/                           # JavaScript модули
+│       ├── config.js                 # Конфигурация
+│       ├── state.js                  # Глобальное состояние
+│       ├── utils.js                  # Утилиты
+│       ├── data-loader.js            # Загрузка данных
+│       ├── item-groups.js            # Логика взаимоисключающих предметов
+│       ├── skill-order.js            # Skill order логика
+│       ├── render-skills.js          # Рендер skill таблицы
+│       ├── render-runes.js           # Рендер рун
+│       ├── render-detail.js          # Рендер деталей чемпиона
+│       ├── render-list.js            # Рендер списка чемпионов
+│       ├── telegram.js               # Telegram Mini App интеграция
+│       └── main.js                   # Главный entry point
+│
+├── 📁 cache/                         # Кэш данные
+│   └── full-analytics-stats.json     # ⭐ ГЛАВНЫЙ ФАЙЛ - данные для Vercel
+│
+└── 📁 docs/                          # Документация
+    ├── CHANGELOG.md                  # История изменений
+    ├── DEPLOYMENT-DOCS.md            # Документация деплоя
+    └── VERCEL-DEPLOYMENT.md          # Инструкция по Vercel
 ```
 
-## 📊 Размер кэша
+---
 
-| Файл | Размер | Описание |
-|------|--------|----------|
-| full-analytics-stats.json | ~119 MB | 19,642 игр с предметами/рунами |
-| skill-orders.json | ~2.6 MB | 7,807 skill orders |
-| full-analytics-dedup.json | ~1.9 MB | Дедупликация матчей |
-| full-analytics-progress.json | ~90 KB | Прогресс сбора |
-| skill-order-progress.json | ~253 KB | Прогресс skill orders |
-| full-analytics-tier-cache.json | ~151 KB | Кэш тиров игроков |
-| **ВСЕГО** | **~124 MB** | |
+## 🎯 Назначение файлов
 
-## 🎯 Основные файлы
+### 🔹 Основные скрипты
 
-### Для запуска локально:
+| Файл | Назначение | Запуск |
+|------|------------|--------|
+| `server.js` | Express сервер для Vercel | Автоматически |
+| `final-test-collector.js` | Сбор данных с Riot API | `node final-test-collector.js` |
+| `convert-test-data.js` | Конвертация данных | `node convert-test-data.js` |
 
+### 🔹 Frontend модули
+
+| Файл | Назначение |
+|------|------------|
+| `config.js` | API URLs, настройки |
+| `state.js` | AppState.globalData, AppState.db |
+| `utils.js` | Helper функции, tooltip, modal |
+| `data-loader.js` | Загрузка DataDragon и API |
+| `item-groups.js` | Взаимоисключающие предметы |
+| `skill-order.js` | Skill order логика + отрисовка |
+| `render-*.js` | Рендеринг UI компонентов |
+| `main.js` | Инициализация приложения |
+
+### 🔹 Конфигурация
+
+| Файл | Назначение |
+|------|------------|
+| `vercel.json` | Маршруты, builds, regions |
+| `.env` | Riot API ключ |
+| `.gitignore` | Исключения для Git |
+| `.vercelignore` | Исключения для Vercel |
+
+---
+
+## 🔄 Поток данных
+
+```
+Riot API
+   ↓
+final-test-collector.js
+   ↓
+cache/final-test-data.json (сырые данные)
+   ↓
+convert-test-data.js
+   ↓
+cache/full-analytics-stats.json (готовые данные)
+   ↓
+git push → GitHub → Vercel
+   ↓
+server.js → /api/stats
+   ↓
+Frontend (public/js/*.js)
+   ↓
+UI отображение
+```
+
+---
+
+## 🚀 Команды
+
+### Сбор данных:
 ```bash
-# 1. Установить зависимости
-npm install
-
-# 2. Проверить .env (API ключ должен быть)
-cat .env
-
-# 3. Запустить сервер
-node server.js
-
-# 4. Или запустить сбор данных
-node unified-collector.js
+node final-test-collector.js    # Сбор с Riot API
+node convert-test-data.js       # Конвертация
 ```
 
-### Для деплоя на сервер:
-
+### Деплой:
 ```bash
-# 1. Загрузить файлы на сервер:
-scp .env server.js unified-collector.js package.json user@wispbyte.com:/var/lol-stats/
-
-# 2. На сервере:
-cd /var/lol-stats
-npm install
-node unified-collector.js
+git add .
+git commit -m "Update"
+git push origin main            # Vercel обновится автоматически
 ```
 
-## 📝 Конфигурация (.env)
-
-```env
-# Riot API ключ (обновлять каждые 24 часа)
-RIOT_API_KEY=RGAPI-...
-
-# Порт сервера
-PORT=3000
-
-# Настройки сбора данных
-TARGET_GAMES=1000          # Игр на чемпиона
-MAX_PLAYERS=200            # Игроков за запуск
-GAMES_PER_PLAYER=20        # Игр на игрока
-
-# Rate limiting
-REQUEST_DELAY=2000         # Задержка (мс)
-
-# Логирование
-DEBUG_LOGS=false
-LOG_TO_CONSOLE=true
-
-# Skill Order
-COLLECT_SKILL_ORDER=true   # Собирать skill order
+### Локальный запуск:
+```bash
+node server.js                  # http://localhost:3000
 ```
 
-## 🧹 Что удалено (очистка)
+---
 
-### Удалено файлов: 57
-- ✅ Тестовые скрипты (test-*.js, check-*.js)
-- ✅ Старые коллекторы (background-collector.js, full-analytics-collector.js)
-- ✅ Старая документация (BUILD-*.md, FINAL-*.md, etc.)
-- ✅ Временные файлы кэша (ambessa*.json, test*.json, etc.)
-- ✅ Папка wispbyte-deploy (интегрировано в основной проект)
+## ⚠️ Важные заметки
 
-### Осталось:
-- ✅ Только production файлы
-- ✅ Актуальная документация (DEPLOYMENT-FINAL.md)
-- ✅ unified-collector.js (единственный коллектор)
-- ✅ server.js (API сервер)
-- ✅ public/ (frontend)
-- ✅ cache/ (данные)
+1. **`cache/full-analytics-stats.json`** - единственный файл кэша в Git
+2. **`.env`** - никогда не коммитить!
+3. **`public/ddragon/`** - не загружать на Vercel (использовать CDN)
+4. **`final-test-collector.js`** - запускать на отдельном сервере
 
-## 🎉 Готово к деплою!
+---
 
-**Следующий шаг:** Тестирование локально → Деплой на wispbyte.com
+**Версия:** 2026-03-04  
+**Статус:** ✅ Production Ready
