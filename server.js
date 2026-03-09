@@ -98,7 +98,7 @@ function formatStatsForFrontend(championsData) {
                 // Фильтруем только финальные предметы
                 const finalItems = (buildData.items || []).filter(id => FINAL_ITEMS.has(id));
                 
-                // Собираем skill orders из matches этого чемпиона
+                // Собираем skill orders из matches этого чемпиона (для Pro Builds)
                 const champMatches = champ.matches || [];
                 const matchingSkillOrders = champMatches
                     .filter(m => {
@@ -118,7 +118,8 @@ function formatStatsForFrontend(championsData) {
                     summoner1: buildData.summoner1,
                     summoner2: buildData.summoner2,
                     perks: buildData.perks,
-                    skillOrders: matchingSkillOrders,  // Skill orders из matches
+                    skillOrders: buildData.skillOrders || matchingSkillOrders,  // Приоритет: из билда, иначе из matches
+                    skillPriority: buildData.skillPriority || [],  // Приоритет прокачки (Q, E, W)
                     frequencyAnalysis: buildData.frequencyAnalysis || null  // Частотный анализ
                 };
             });
