@@ -94,7 +94,26 @@ function getTopN(freqObj, n) {
 function analyzeRunes(games) {
     if (!games || games.length === 0) return null;
 
-    const perksList = games.map(g => g.perks).filter(p => p && p.primary);
+    // Извлекаем perks из игр, правильно обрабатывая структуру
+    const perksList = games.map(g => {
+        const perks = g.perks;
+        if (!perks || !perks.primary) return null;
+        return {
+            primary: perks.primary,
+            keystone: perks.keystone,
+            sub: perks.sub,
+            // primaryRunes может быть массивом объектов или чисел
+            primaryRunes: Array.isArray(perks.primaryRunes) 
+                ? perks.primaryRunes.map(r => typeof r === 'object' ? r.perk : r)
+                : [],
+            // secondaryRunes может быть массивом объектов или чисел
+            secondaryRunes: Array.isArray(perks.secondaryRunes)
+                ? perks.secondaryRunes.map(r => typeof r === 'object' ? r.perk : r)
+                : [],
+            shards: perks.shards || []
+        };
+    }).filter(p => p && p.primary);
+
     if (perksList.length === 0) return null;
 
     // ШАГ 1: Найти самое популярное Основное древо
@@ -116,12 +135,12 @@ function analyzeRunes(games) {
     if (gamesWithKeystone.length === 0) return null;
 
     // ШАГ 3: Найти самые популярные малые руны для основной ветки (по слотам)
-    // primaryRunes обычно это [keystone, slot1, slot2, slot3]
+    // primaryRunes это [keystone, slot1, slot2, slot3]
     const runeSlotCounts = [[], [], [], []]; // 4 слота
     gamesWithKeystone.forEach(p => {
         const runes = p.primaryRunes || [];
         runes.forEach((runeId, idx) => {
-            if (idx < 4) {
+            if (idx < 4 && runeId) {
                 runeSlotCounts[idx][runeId] = (runeSlotCounts[idx][runeId] || 0) + 1;
             }
         });
@@ -143,14 +162,16 @@ function analyzeRunes(games) {
 
     // Фильтруем игры с этой вторичной веткой
     const gamesWithSubTree = gamesWithKeystone.filter(p => p.sub === subTreeId);
-    
+
     // ШАГ 5: Найти самые популярные руны во вторичной ветке (топ-2)
     let secondaryRunes = [];
     if (gamesWithSubTree && gamesWithSubTree.length > 0) {
         const secondaryRuneCounts = {};
         gamesWithSubTree.forEach(p => {
             (p.secondaryRunes || []).forEach(runeId => {
-                secondaryRuneCounts[runeId] = (secondaryRuneCounts[runeId] || 0) + 1;
+                if (runeId) {
+                    secondaryRuneCounts[runeId] = (secondaryRuneCounts[runeId] || 0) + 1;
+                }
             });
         });
         const topSecondary = getTopN(secondaryRuneCounts, 2);
@@ -162,7 +183,7 @@ function analyzeRunes(games) {
     gamesWithKeystone.forEach(p => {
         const shards = p.shards || [];
         shards.forEach((shardId, idx) => {
-            if (idx < 3) {
+            if (idx < 3 && shardId) {
                 shardCounts[idx][shardId] = (shardCounts[idx][shardId] || 0) + 1;
             }
         });
@@ -227,16 +248,32 @@ function analyzeItems(games, role) {
             winRate: s.count > 0 ? ((s.wins / s.count) * 100).toFixed(1) : 0
         }));
 
-    // === CORE BUILD (последовательность первых 3 легендарных предметов) ===
-    // Анализируем порядок покупки первых предметов (исключая сапоги и стартовые)
-    const coreBuildSequences = {};
+    // === ЧАСТОТНЫЙ АНАЛИЗ ВСЕХ ПРЕДМЕТОВ ===
+    // Считаем частоту каждого предмета из финальных предметов игры
     const itemFrequency = {};
     const itemPositions = {};
 
-    games.forEach(game => {
+    games.forEach((game, gameIdx) => {
         const items = game.items || [];
-        const itemPurchases = game.itemPurchases;
         
+        // Считаем каждый предмет в финальном билде
+        items.forEach((itemId, idx) => {
+            if (!itemFrequency[itemId]) {
+                itemFrequency[itemId] = { count: 0, positions: [], wins: 0 };
+            }
+            itemFrequency[itemId].count++;
+            itemFrequency[itemId].positions.push(idx);
+            if (game.win) itemFrequency[itemId].wins++;
+        });
+    });
+
+    // === CORE BUILD (последовательность первых 3 легендарных предметов) ===
+    // Анализируем порядок покупки первых предметов (исключая сапоги и стартовые)
+    const coreBuildSequences = {};
+
+    games.forEach(game => {
+        const itemPurchases = game.itemPurchases;
+
         // Получаем порядок покупки предметов из timeline
         let purchaseOrder = [];
         if (itemPurchases && itemPurchases.itemPurchaseTimeline) {
@@ -244,12 +281,12 @@ function analyzeItems(games, role) {
                 .sort((a, b) => a.timestamp - b.timestamp)
                 .map(p => p.itemId);
         } else {
-            purchaseOrder = items;
+            purchaseOrder = game.items || [];
         }
 
-        // Фильтруем только "первые предметы" (не сапоги, не стартовые)
-        const coreItems = purchaseOrder.filter(id => 
-            !BOOTS_IDS.has(id) && !STARTING_ITEMS.has(id)
+        // Фильтруем только "первые предметы" (не сапоги, не стартовые, не варды)
+        const coreItems = purchaseOrder.filter(id =>
+            !BOOTS_IDS.has(id) && !STARTING_ITEMS.has(id) && !TRINKET_IDS.has(id)
         );
 
         // Берем первые 3 для последовательности
@@ -258,25 +295,16 @@ function analyzeItems(games, role) {
             const seqKey = coreSequence.join('-');
             coreBuildSequences[seqKey] = (coreBuildSequences[seqKey] || 0) + 1;
         }
-
-        // Считаем частоту каждого предмета
-        coreItems.forEach((id, idx) => {
-            if (!itemFrequency[id]) {
-                itemFrequency[id] = { count: 0, positions: [], wins: 0 };
-            }
-            itemFrequency[id].count++;
-            itemFrequency[id].positions.push(idx);
-            if (game.win) itemFrequency[id].wins++;
-        });
     });
 
     // Находим самую популярную последовательность
     const [topSequence] = getTopN(coreBuildSequences, 1);
     let coreBuildOrder = topSequence ? topSequence[0].split('-').map(x => parseInt(x)) : [];
 
-    // Если последовательностей мало, формируем по частоте предметов
+    // Если последовательностей мало, формируем по частоте предметов (исключая сапоги и стартовые)
     if (coreBuildOrder.length < 3) {
         coreBuildOrder = Object.entries(itemFrequency)
+            .filter(([id]) => !BOOTS_IDS.has(Number(id)) && !STARTING_ITEMS.has(Number(id)) && !TRINKET_IDS.has(Number(id)))
             .sort((a, b) => {
                 if (b[1].count !== a[1].count) return b[1].count - a[1].count;
                 // Сортируем по средней позиции (раньше купленные primero)
