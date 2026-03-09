@@ -611,14 +611,21 @@ function renderProBuilds(container, matches, champId, role, sortBy = 'duration',
                     </div>
 
                     <!-- Руны -->
-                    <div style="display:flex; gap:3px; align-items:center;">
+                    <div style="display:flex; gap:3px; align-items:center; flex-wrap:wrap;">
+                        <!-- Primary -->
                         ${keystoneIcon ? `<img src="${CONFIG.DDRAGON_BASE}/img/${keystoneIcon}" style="width:24px; height:24px; border-radius:50%;" title="Keystone">` : ''}
                         ${(match.perks?.primaryRunes || []).slice(0, 3).map(runeId => {
                             const rune = AppState.db.runes[String(runeId)];
                             const runeIcon = rune ? `${CONFIG.DDRAGON_BASE}/img/${rune.path}` : '';
                             return runeIcon ? `<img src="${runeIcon}" style="width:16px; height:16px; border-radius:50%; opacity:0.8;">` : '';
                         }).join('')}
-                        ${subTreeIcon ? `<img src="${CONFIG.DDRAGON_BASE}/img/${subTreeIcon}" style="width:20px; height:20px; border-radius:50%; opacity:0.7;">` : ''}
+                        ${subTreeIcon ? `<img src="${CONFIG.DDRAGON_BASE}/img/${subTreeIcon}" style="width:20px; height:20px; border-radius:50%; opacity:0.7;" title="Secondary Tree">` : ''}
+                        <!-- Secondary Runes -->
+                        ${(match.perks?.secondaryRunes || []).slice(0, 2).map(runeId => {
+                            const rune = AppState.db.runes[String(runeId)];
+                            const runeIcon = rune ? `${CONFIG.DDRAGON_BASE}/img/${rune.path}` : '';
+                            return runeIcon ? `<img src="${runeIcon}" style="width:14px; height:14px; border-radius:50%; opacity:0.6;" title="Secondary Rune">` : '';
+                        }).join('')}
                     </div>
 
                     <!-- Финальный билд (6 предметов) -->

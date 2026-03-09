@@ -104,51 +104,46 @@
             </div>
             <div id="changes-body" class="modal-body" style="font-size: 13px; line-height: 1.8;">
                 <div style="margin-bottom: 15px;">
-                    <strong style="color: #fbbf24;">🎨 Item Display Improvements:</strong>
+                    <strong style="color: #fbbf24;">🎯 Cascading Build Analysis:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
-                        <li>Item descriptions now split into <strong>⚡ Stats</strong> and <strong>✨ Passive</strong> sections</li>
-                        <li>Visual separator between stats and passive effects</li>
-                        <li>Gold-colored headers for better navigation</li>
+                        <li>Build now filtered by runes → summoners → items → skills priority</li>
+                        <li>Items based on games with same rune setup, not all games mixed</li>
+                        <li>More accurate representation of actual popular builds</li>
                     </ul>
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <strong style="color: #fbbf24;">💡 Item Tooltips:</strong>
+                    <strong style="color: #fbbf24;">📦 Item Build Updates:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
-                        <li>Hover over any item to see quick stats and description</li>
-                        <li>Click to open full item details modal</li>
+                        <li>Starting Items: Filtered to show only combos with ≥10% pick rate</li>
+                        <li>ADC builds: 6 items + boots (patch change)</li>
+                        <li>Other roles: 5 items + boots</li>
+                        <li>Items sorted by pick rate, not position</li>
                     </ul>
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <strong style="color: #fbbf24;">⚠️ Exclusive Items Logic:</strong>
+                    <strong style="color: #fbbf24;">🏆 Pro Builds Improvements:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
-                        <li>Added validation for mutually exclusive items</li>
-                        <li>8 item groups: Boots, Tiamat, Sheen, Stormrazor, Hydra, Support, Jungle, Crown</li>
-                        <li>Prevents showing invalid item combinations</li>
+                        <li>Starting Items: First purchase excluding trinkets (wards)</li>
+                        <li>Full build (6 items) shown in collapsed view</li>
+                        <li>Mobile layout: Items under runes, compact player info</li>
+                        <li>Summoner name with rank displayed (e.g. "Faker (Master+)")</li>
+                        <li>Secondary runes now visible in collapsed view</li>
                     </ul>
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <strong style="color: #fbbf24;">📱 Mobile UI Improvements:</strong>
+                    <strong style="color: #fbbf24;">🎨 Rune Display:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
-                        <li>Larger item icons (36px)</li>
-                        <li>Bigger font size (11px) for better readability</li>
-                        <li>Improved text contrast (#cbd5e1)</li>
-                    </ul>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <strong style="color: #fbbf24;">🎯 Skill Order Table:</strong>
-                    <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
-                        <li>Fixed transparent background issue</li>
-                        <li>Skill icons now have solid background (#1e293b)</li>
-                        <li>No more overlapping skill points</li>
+                        <li>Full hierarchical analysis: Tree → Keystone → Minor Runes → Subtree</li>
+                        <li>Runes filtered from games matching most popular setup</li>
                     </ul>
                 </div>
                 <div style="border-top: 1px solid #334155; padding-top: 15px; margin-top: 20px;">
                     <strong style="color: #4ade80;">✅ Testing Checklist:</strong>
                     <ul style="margin: 8px 0 0 20px; color: #cbd5e1;">
-                        <li>✓ Click on any item → should open detailed modal with Stats/Passive sections</li>
-                        <li>✓ Hover over item → tooltip should appear</li>
-                        <li>✓ Open champion → skill order background should be solid</li>
-                        <li>✓ Check item names under icons → should be readable on mobile</li>
+                        <li>✓ Starting Items should show only combos with ≥10% pick rate</li>
+                        <li>✓ Item build should have 5 items (6 for ADC) + boots</li>
+                        <li>✓ Pro Builds collapsed view shows full build + secondary runes</li>
+                        <li>✓ Mobile layout displays items under runes</li>
                     </ul>
                 </div>
             </div>
@@ -168,17 +163,17 @@
             </div>
             <div id="goals-body" class="modal-body" style="font-size: 13px; line-height: 1.8;">
                 <div style="margin-bottom: 15px;">
-                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
-                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px; border: 1px solid #4ade80;">
+                        <div style="font-size: 16px; min-width: 20px;">✓</div>
                         <div>
-                            <strong style="color: #fbbf24;">Most Popular Build</strong>
+                            <strong style="color: #4ade80;">Most Popular Build</strong>
                             <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Core items with flexible 3rd slot options based on game situation</div>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px;">
-                        <div style="font-size: 16px; min-width: 20px;">☐</div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; padding: 10px; background: #0f172a; border-radius: 6px; border: 1px solid #4ade80;">
+                        <div style="font-size: 16px; min-width: 20px;">✓</div>
                         <div>
-                            <strong style="color: #fbbf24;">Item Statistics</strong>
+                            <strong style="color: #4ade80;">Item Statistics</strong>
                             <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">Overall item stats per champion with win rates (complex build order logic)</div>
                         </div>
                     </div>
