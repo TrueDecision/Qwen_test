@@ -574,11 +574,15 @@ function renderProBuilds(container, matches, champId, role, sortBy = 'duration',
         const winColor = match.win ? '#4ade80' : '#f87171';
         const kda = `${match.kills}/${match.deaths}/${match.assists}`;
         const cs = match.cs || 0;
-        // gameDuration приходит в миллисекундах, конвертируем в минуты
         const duration = Math.round((match.gameDuration || 0) / 60000);
 
-        // Стартовые предметы (первые 2-3)
-        const startingItems = (match.items || []).slice(0, 3);
+        // Стартовые предметы - первый закуп (исключая варды)
+        const TRINKET_IDS = [3340, 3363, 3364];
+        const startingItems = (match.itemPurchases?.startingItems || match.items?.slice(0, 3) || [])
+            .filter(id => !TRINKET_IDS.includes(id));
+
+        // Финальный билд (6 предметов)
+        const fullBuild = (match.items || []).slice(0, 6);
 
         // Иконка кестоуна
         const keystoneId = match.perks?.keystone;
@@ -591,79 +595,50 @@ function renderProBuilds(container, matches, champId, role, sortBy = 'duration',
         const subTreeIcon = subTreeId && AppState.db.runeTrees[String(subTreeId)]
             ? AppState.db.runeTrees[String(subTreeId)].icon
             : '';
-        
-        // Проверка данных для отладки
-        if (!match.summonerName || match.summonerName === 'Unknown') {
-            console.warn('⚠️ Missing summonerName in match:', match);
-        }
-        if (duration === 0) {
-            console.warn('⚠️ gameDuration is 0 or missing:', match.gameDuration, match);
-        }
-        
+
         const rowBg = idx % 2 === 0 ? '#1e293b' : '#0f172a';
-        
+
         html += `
             <div style="border-bottom:1px solid #334155;">
-                <div style="display:grid; grid-template-columns: 1fr 100px 120px 80px 140px 40px; align-items:center; 
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;
                             padding:10px 16px; background:${rowBg}; cursor:pointer; transition:background 0.2s;"
                      onclick="window.toggleProMatch(${idx})"
                      onmouseenter="this.style.background='#334155'" onmouseleave="this.style.background='${rowBg}'">
                     <!-- Игрок и KDA -->
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="text-align:left;">
-                            <div style="font-weight:bold; color:#f1f5f9; font-size:13px;">${match.summonerName || 'Unknown'}</div>
-                            <div style="font-size:11px; color:#64748b;">${match.playerRank || ''} • ${kda} • ${cs} CS</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Руны и предметы -->
-                    <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
-                        <!-- Руны -->
-                        <div style="display:flex; gap:3px; align-items:center;">
-                            ${keystoneIcon ? `<img src="${CONFIG.DDRAGON_BASE}/img/${keystoneIcon}" style="width:24px; height:24px; border-radius:50%;" title="Keystone">` : ''}
-                            ${(match.perks?.primaryRunes || []).slice(0, 3).map(runeId => {
-                                const rune = AppState.db.runes[String(runeId)];
-                                const runeIcon = rune ? `${CONFIG.DDRAGON_BASE}/img/${rune.path}` : '';
-                                const runeName = rune ? rune.name : '';
-                                return runeIcon ? `<img src="${runeIcon}" style="width:16px; height:16px; border-radius:50%; opacity:0.8;" title="${runeName}">` : '';
-                            }).join('')}
-                            ${subTreeIcon ? `<img src="${CONFIG.DDRAGON_BASE}/img/${subTreeIcon}" style="width:20px; height:20px; border-radius:50%; opacity:0.7;" title="Secondary Tree">` : ''}
-                            ${(match.perks?.secondaryRunes || []).slice(0, 2).map(runeId => {
-                                const rune = AppState.db.runes[String(runeId)];
-                                const runeIcon = rune ? `${CONFIG.DDRAGON_BASE}/img/${rune.path}` : '';
-                                const runeName = rune ? rune.name : '';
-                                return runeIcon ? `<img src="${runeIcon}" style="width:14px; height:14px; border-radius:50%; opacity:0.6;" title="${runeName}">` : '';
-                            }).join('')}
-                        </div>
+                    <div style="flex:1; min-width:200px;">
+                        <div style="font-weight:bold; color:#f1f5f9; font-size:13px;">${match.summonerName || 'Unknown'} (${match.playerRank || 'Master+'})</div>
+                        <div style="font-size:11px; color:#64748b;">${kda} • ${cs} CS • ${duration} min</div>
                     </div>
 
-                    <!-- Предметы (только первые 3 для компактности) -->
-                    <div style="display:flex; gap:4px; justify-content:center;">
-                        ${(match.items || []).slice(0, 3).map(itemId => {
+                    <!-- Руны -->
+                    <div style="display:flex; gap:3px; align-items:center;">
+                        ${keystoneIcon ? `<img src="${CONFIG.DDRAGON_BASE}/img/${keystoneIcon}" style="width:24px; height:24px; border-radius:50%;" title="Keystone">` : ''}
+                        ${(match.perks?.primaryRunes || []).slice(0, 3).map(runeId => {
+                            const rune = AppState.db.runes[String(runeId)];
+                            const runeIcon = rune ? `${CONFIG.DDRAGON_BASE}/img/${rune.path}` : '';
+                            return runeIcon ? `<img src="${runeIcon}" style="width:16px; height:16px; border-radius:50%; opacity:0.8;">` : '';
+                        }).join('')}
+                        ${subTreeIcon ? `<img src="${CONFIG.DDRAGON_BASE}/img/${subTreeIcon}" style="width:20px; height:20px; border-radius:50%; opacity:0.7;">` : ''}
+                    </div>
+
+                    <!-- Финальный билд (6 предметов) -->
+                    <div style="display:flex; gap:3px; flex-wrap:wrap;">
+                        ${fullBuild.map(itemId => {
                             const item = AppState.db.items[String(itemId)];
                             const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
-                            const itemName = item ? item.name : '';
-                            const itemDesc = item ? item.desc : '';
-                            return itemImg
-                                ? `<img src="${itemImg}" style="width:22px; height:22px; border-radius:4px; border:1px solid #475569; cursor:pointer;"
-                                    title="${itemName.replace(/"/g, '&quot;')}"
-                                    onclick="window.openDetailModal('pro_match_item', null, {img: '${itemImg}', name: '${itemName.replace(/'/g, "\\'")}', desc: '${itemDesc.replace(/'/g, "\\'")}'})"
-                                    onmouseenter="window.showTooltip(event, '${itemName.replace(/'/g, "\\'")}', '${itemDesc.replace(/'/g, "\\'") || ''}')"
-                                    onmouseleave="window.hideTooltip()">`
-                                : '';
+                            return itemImg ? `<img src="${itemImg}" style="width:20px; height:20px; border-radius:4px; border:1px solid #475569;">` : '';
                         }).join('')}
                     </div>
-                    
+
                     <!-- Результат -->
-                    <div style="text-align:center;">
+                    <div style="text-align:center; min-width:60px;">
                         <span style="color:${winColor}; font-weight:bold; font-size:12px;">${match.win ? 'WIN' : 'LOSE'}</span>
-                        <div style="font-size:10px; color:#64748b;">${duration} min</div>
                     </div>
-                    
+
                     <!-- Стрелка -->
                     <div style="text-align:center; color:#64748b;" id="arrow-${idx}">▼</div>
                 </div>
-                
+
                 <!-- Раскрывающаяся детальная информация -->
                 <div id="pro-match-detail-${idx}" style="display:none; padding:16px; background:#0f172a; border-bottom:1px solid #334155;">
                     <div style="display:flex; gap:20px; flex-wrap:wrap;">
@@ -674,10 +649,7 @@ function renderProBuilds(container, matches, champId, role, sortBy = 'duration',
                                 ${startingItems.map(itemId => {
                                     const item = AppState.db.items[String(itemId)];
                                     const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
-                                    const itemName = item ? item.name : '';
-                                    return itemImg
-                                        ? `<img src="${itemImg}" style="width:32px; height:32px; border-radius:4px; border:1px solid #fbbf24;" title="${itemName}">`
-                                        : '';
+                                    return itemImg ? `<img src="${itemImg}" style="width:32px; height:32px; border-radius:4px; border:1px solid #fbbf24;" title="${item.name}">` : '';
                                 }).join('')}
                             </div>
                         </div>

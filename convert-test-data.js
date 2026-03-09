@@ -286,6 +286,10 @@ function analyzeItems(games, role) {
 
     const topStartingItems = Object.values(startingItemCombos)
         .sort((a, b) => b.count - a.count)
+        .filter(s => {
+            const percent = games.length > 0 ? ((s.count / games.length) * 100) : 0;
+            return percent >= 10;  // Показываем только комбинации с 10%+ pick rate
+        })
         .slice(0, 3)
         .map(s => ({
             items: s.items,
@@ -436,8 +440,14 @@ function analyzeItems(games, role) {
         })
         .map(x => parseInt(x[0]));
 
-    // finalBuildOrder = топ-5 предметов по pick rate + сапог (если есть)
-    let finalBuildOrder = itemsByPickRate.slice(0, 5);
+    // Количество предметов в билде зависит от роли
+    // ADC: 6 предметов + сапог = 7 всего (с последнего патча)
+    // Остальные: 5 предметов + сапог = 6 всего
+    const isADC = role === 'BOTTOM';
+    const maxItems = isADC ? 6 : 5;
+
+    // finalBuildOrder = топ-N предметов по pick rate + сапог (если есть)
+    let finalBuildOrder = itemsByPickRate.slice(0, maxItems);
     
     // Добавляем самый популярный сапог на позицию 1 (после первого предмета)
     if (topBoots.length > 0 && topBoots[0].percent >= 40) {
