@@ -37,14 +37,15 @@ const STARTING_ITEMS = new Set([
 ]);
 // Аксессуары (варды) — исключать из стартовых наборов
 const TRINKET_IDS = new Set([3340, 3363, 3364]); // Stealth Ward, Farsight Alteration, Oracle Lens
-// Предметы которые считаются "первыми предметами" (не стартовые, не сапоги)
+// Предметы которые считаются "первыми предметами" (не стартовые, не сапоги, не компоненты)
 const FIRST_ITEM_CANDIDATES = new Set([
-    3802, 3803, 6617, 6653, 6655, 6656, 6657, 6660, 6661, 6662, 6664, 6665, 6666, 6667, 6670, 6671, 6672, 6673, 6675, 6676, 6677, // Mythics
+    // Mythics
+    6617, 6653, 6655, 6656, 6657, 6660, 6661, 6662, 6664, 6665, 6666, 6667, 6670, 6671, 6672, 6673, 6675, 6676, 6677,
     3001, 3003, 3004, 3011, 3015, 3026, 3031, 3033, 3036, 3040, 3042, 3046, 3050, 3053, 3059, 3065, 3068, 3071, 3072, 3074, 3075,
     3078, 3083, 3089, 3091, 3094, 3095, 3100, 3102, 3107, 3109, 3110, 3115, 3116, 3119, 3121, 3124, 3133, 3135, 3139, 3140, 3142,
-    3143, 3144, 3145, 3146, 3147, 3151, 3152, 3153, 3156, 3157, 3161, 3165, 3179, 3180, 3181, 3190, 3193, 3222, 3504, 3508, 3513,
+    3143, 3144, 3146, 3147, 3151, 3152, 3153, 3156, 3157, 3161, 3165, 3179, 3180, 3181, 3190, 3193, 3222, 3504, 3508, 3513,
     3599, 3742, 3814, 4005, 4401, 4403, 4628, 4629, 4630, 4632, 4633, 4636, 4637, 4638, 4643, 4644, 4645, 6029, 6035, 6333,
-    6609, 6610, 6616, 6630, 6631, 6632, 6650, 6651, 6652, 6653, 6655, 6656, 6657, 6660, 6661, 6662, 6664, 6665, 6666, 6667,
+    6609, 6610, 6616, 6630, 6631, 6632, 6650, 6651, 6652, 6660, 6661, 6662, 6664, 6665, 6666, 6667,
     6670, 6671, 6672, 6673, 6675, 6676, 6677, 6691, 6692, 6693, 6694, 6695, 6696, 6700
 ]);
 
@@ -216,20 +217,23 @@ function analyzeItems(games, role) {
 
     // === СТАРТОВЫЕ ПРЕДМЕТЫ ===
     // Анализируем первые 1-2 минуты игры (до первого возврата)
+    // Исключаем варды — их покупают всегда, это не часть билда
     const startingItemCombos = {};
-    
+
     games.forEach(game => {
         const itemPurchases = game.itemPurchases;
         if (!itemPurchases) return;
 
-        // Берем предметы купленные в первые 2 минуты (120 секунд)
-        const earlyItems = (itemPurchases.itemPurchaseTimeline || [])
-            .filter(p => p.minutes <= 2 && !TRINKET_IDS.has(p.itemId))
-            .map(p => p.itemId);
-
-        // Также учитываем startingItems из данных (исключая варды)
-        const startingItems = (itemPurchases.startingItems || earlyItems.slice(0, 3))
+        // Берем startingItems и исключаем варды
+        let startingItems = (itemPurchases.startingItems || [])
             .filter(id => !TRINKET_IDS.has(id));
+
+        // Если startingItems пустой после фильтрации, берем из timeline
+        if (startingItems.length === 0) {
+            startingItems = (itemPurchases.itemPurchaseTimeline || [])
+                .filter(p => p.minutes <= 2 && !TRINKET_IDS.has(p.itemId))
+                .map(p => p.itemId);
+        }
 
         if (startingItems.length > 0) {
             const key = startingItems.slice().sort().join('-');
@@ -358,37 +362,51 @@ function analyzeItems(games, role) {
         .sort((a, b) => parseFloat(b.percent) - parseFloat(a.percent));
 
     // === ФИНИШНАЯ СБОРКА (6 предметов) ===
+    // Находим самую частую комбинацию из 6 предметов
     const fullBuildCombos = {};
 
     games.forEach(game => {
-        const items = (game.items || []).filter(id => 
+        // Берем финальные предметы, исключая стартовые и варды
+        const items = (game.items || []).filter(id =>
             !STARTING_ITEMS.has(id) && !TRINKET_IDS.has(id)
         );
         if (items.length >= 5) {
+            // Сортируем для группировки одинаковых комбинаций
             const comboKey = items.slice(0, 6).sort().join('-');
             fullBuildCombos[comboKey] = (fullBuildCombos[comboKey] || 0) + 1;
         }
     });
 
     const [topFullBuild] = getTopN(fullBuildCombos, 1);
+    // fullBuildItems это отсортированный массив ID (для комбинации)
     const fullBuildItems = topFullBuild ? topFullBuild[0].split('-').map(x => parseInt(x)) : [];
 
     // === ФОРМИРУЕМ ИТОГОВЫЙ БИЛД ===
-    // Используем fullBuildItems как основу, если есть
-    let finalBuildOrder = [...fullBuildItems];
+    // Берем предметы из itemFrequency, отсортированные по позиции покупки
+    // Это даст правильный порядок предметов в билде
+    const itemsByPosition = Object.entries(itemFrequency)
+        .filter(([id]) => {
+            const itemId = Number(id);
+            // Исключаем: варды, стартовые предметы, сапоги, компоненты
+            // Оставляем только финальные предметы из FIRST_ITEM_CANDIDATES
+            return FIRST_ITEM_CANDIDATES.has(itemId);
+        })
+        .sort((a, b) => {
+            // Сначала по средней позиции (возрастание)
+            const aAvg = a[1].positions.reduce((s, x) => s + x, 0) / a[1].positions.length;
+            const bAvg = b[1].positions.reduce((s, x) => s + x, 0) / b[1].positions.length;
+            if (aAvg !== bAvg) return aAvg - bAvg;
+            // Потом по частоте (убывание)
+            return b[1].count - a[1].count;
+        })
+        .map(x => parseInt(x[0]));
+
+    // finalBuildOrder = топ-5 предметов по позиции + сапог (если есть)
+    let finalBuildOrder = itemsByPosition.slice(0, 5);
     
-    // Если fullBuildItems пустой, используем coreBuildOrder + boots
-    if (finalBuildOrder.length === 0) {
-        finalBuildOrder = [...coreBuildOrder];
-        if (topBoots.length > 0 && topBoots[0].percent >= 40) {
-            finalBuildOrder.splice(1, 0, topBoots[0].id);
-        }
-    } else {
-        // Вставляем сапог на правильную позицию, если его нет в fullBuildItems
-        const hasBoots = finalBuildOrder.some(id => BOOTS_IDS.has(id));
-        if (!hasBoots && topBoots.length > 0 && topBoots[0].percent >= 40) {
-            finalBuildOrder.splice(1, 0, topBoots[0].id);
-        }
+    // Добавляем самый популярный сапог на позицию 1 (после первого предмета)
+    if (topBoots.length > 0 && topBoots[0].percent >= 40) {
+        finalBuildOrder.splice(1, 0, topBoots[0].id);
     }
 
     // Частотный анализ для отображения
