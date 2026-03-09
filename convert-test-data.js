@@ -489,37 +489,71 @@ function analyzeSkillOrders(games) {
     });
 
     const [topSequence] = getTopN(sequenceCounts, 1);
-    const topSkillOrder = topSequence ? skillOrders.find(so => 
+    let topSkillOrder = topSequence ? skillOrders.find(so =>
         (so.byLevel || []).slice(0, 6).join('-') === topSequence[0]
     ) : skillOrders[0];
 
-    // Определяем приоритет максимизации
-    const skillMaxOrder = {}; // { Q: [1,4,5], W: [2,3], E: [6], R: [8,17] }
-    skillOrders.forEach(so => {
-        const byLevel = so.byLevel || [];
-        ['Q', 'W', 'E', 'R'].forEach(skill => {
-            if (!skillMaxOrder[skill]) skillMaxOrder[skill] = [];
-            byLevel.forEach((s, idx) => {
-                if (s === skill && !skillMaxOrder[skill].includes(idx + 1)) {
-                    skillMaxOrder[skill].push(idx + 1);
-                }
-            });
+    // === ДОЗАПОЛНЕНИЕ SKILL ORDER ДО 18 УРОВНЯ ===
+    // Если skill order обрывается раньше 18 уровня, дозаполняем его
+    let byLevel = topSkillOrder?.byLevel || [];
+    
+    if (byLevel.length < 18) {
+        // Считаем сколько раз уже прокачан каждый навык
+        const skillCounts = { Q: 0, W: 0, E: 0, R: 0 };
+        byLevel.forEach(s => { if (s) skillCounts[s]++; });
+
+        // Определяем приоритет максимизации по текущему skill order
+        const skillFirstLevel = { Q: null, W: null, E: null, R: null };
+        byLevel.forEach((s, idx) => {
+            if (s && skillFirstLevel[s] === null) {
+                skillFirstLevel[s] = idx + 1;
+            }
         });
+
+        // Сортируем Q, W, E по первому уровню прокачки (приоритет максимизации)
+        const priorityOrder = ['Q', 'W', 'E']
+            .filter(s => skillFirstLevel[s] !== null)
+            .sort((a, b) => skillFirstLevel[a] - skillFirstLevel[b]);
+
+        // Дозаполняем до 18 уровней
+        for (let lvl = byLevel.length + 1; lvl <= 18; lvl++) {
+            // R всегда на 6, 11, 16 если ещё не взят
+            if ((lvl === 6 || lvl === 11 || lvl === 16) && skillCounts.R < 3) {
+                byLevel.push('R');
+                skillCounts.R++;
+            } else {
+                // Берем следующий навык по приоритету, который ещё не максимален (5 уровней)
+                for (const skill of priorityOrder) {
+                    if (skillCounts[skill] < 5) {
+                        byLevel.push(skill);
+                        skillCounts[skill]++;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Пересчитываем skillPriority из дозаполненного byLevel
+    const skillMaxOrder = { Q: [], W: [], E: [], R: [] };
+    byLevel.forEach((s, idx) => {
+        if (s && !skillMaxOrder[s].includes(idx + 1)) {
+            skillMaxOrder[s].push(idx + 1);
+        }
     });
 
-    // Сортируем скиллы по первому уровню прокачки
     const skillPriority = Object.entries(skillMaxOrder)
         .filter(([skill]) => skill !== 'R')
         .sort((a, b) => {
-            const aFirst = Math.min(...a[1]);
-            const bFirst = Math.min(...b[1]);
+            const aFirst = skillMaxOrder[a[0]].length > 0 ? Math.min(...skillMaxOrder[a[0]]) : 999;
+            const bFirst = skillMaxOrder[b[0]].length > 0 ? Math.min(...skillMaxOrder[b[0]]) : 999;
             return aFirst - bFirst;
         })
         .map(([skill]) => skill);
 
     return {
-        byLevel: topSkillOrder?.byLevel || [],
-        skillPriority: skillPriority, // Например: ['Q', 'E', 'W']
+        byLevel: byLevel,
+        skillPriority: skillPriority,
         allOrders: skillOrders.slice(0, 10)
     };
 }
@@ -564,6 +598,19 @@ Object.entries(testData).forEach(([champId, roles]) => {
         const builds = {};
         const buildKey = 'typical';
 
+        // Создаём дозаполненный skill order для билда
+        const filledSkillOrder = skillOrder ? {
+            byLevel: skillOrder.byLevel || [],
+            Q: [], W: [], E: [], R: []
+        } : null;
+        
+        if (filledSkillOrder) {
+            // Пересчитываем Q, W, E, R из byLevel
+            (filledSkillOrder.byLevel || []).forEach((s, idx) => {
+                if (s) filledSkillOrder[s].push(idx + 1);
+            });
+        }
+
         builds[buildKey] = {
             games: roleGames,
             wins: roleWins,
@@ -571,7 +618,7 @@ Object.entries(testData).forEach(([champId, roles]) => {
             summoner1: summoners.summoner1,
             summoner2: summoners.summoner2,
             perks: runes || {},
-            skillOrders: skillOrder?.allOrders || [],
+            skillOrders: filledSkillOrder ? [filledSkillOrder] : [],  // Используем дозаполненный skill order
             skillPriority: skillOrder?.skillPriority || [],
             frequencyAnalysis: items ? {
                 startingItems: items.startingItems,
