@@ -92,116 +92,119 @@ function getTopN(freqObj, n) {
 // ============================================================================
 
 function analyzeRunes(games) {
-    if (!games || games.length === 0) return null;
+    try {
+        if (!games || games.length === 0) return null;
 
-    // Извлекаем perks из игр, правильно обрабатывая структуру
-    const perksList = games.map(g => {
-        const perks = g.perks;
-        if (!perks || !perks.primary) return null;
-        return {
-            primary: perks.primary,
-            keystone: perks.keystone,
-            sub: perks.sub,
-            // primaryRunes может быть массивом объектов или чисел
-            primaryRunes: Array.isArray(perks.primaryRunes) 
-                ? perks.primaryRunes.map(r => typeof r === 'object' ? r.perk : r)
-                : [],
-            // secondaryRunes может быть массивом объектов или чисел
-            secondaryRunes: Array.isArray(perks.secondaryRunes)
-                ? perks.secondaryRunes.map(r => typeof r === 'object' ? r.perk : r)
-                : [],
-            shards: perks.shards || []
-        };
-    }).filter(p => p && p.primary);
-
-    if (perksList.length === 0) return null;
-
-    // ШАГ 1: Найти самое популярное Основное древо
-    const primaryTreeCounts = countFrequency(perksList, p => p.primary);
-    const [mostPopularPrimaryTree] = getTopN(primaryTreeCounts, 1);
-    const primaryTreeId = mostPopularPrimaryTree ? mostPopularPrimaryTree[0] : perksList[0].primary;
-
-    // Фильтруем игры с этим основным древом
-    const gamesWithPrimaryTree = perksList.filter(p => p.primary === primaryTreeId);
-    if (gamesWithPrimaryTree.length === 0) return null;
-
-    // ШАГ 2: Среди игр с этим древом найти самый популярный Краеугольный камень
-    const keystoneCounts = countFrequency(gamesWithPrimaryTree, p => p.keystone);
-    const [mostPopularKeystone] = getTopN(keystoneCounts, 1);
-    const keystoneId = mostPopularKeystone ? mostPopularKeystone[0] : gamesWithPrimaryTree[0].keystone;
-
-    // Фильтруем игры с этим кестоуном
-    const gamesWithKeystone = gamesWithPrimaryTree.filter(p => p.keystone === keystoneId);
-    if (gamesWithKeystone.length === 0) return null;
-
-    // ШАГ 3: Найти самые популярные малые руны для основной ветки (по слотам)
-    // primaryRunes это [keystone, slot1, slot2, slot3]
-    const runeSlotCounts = [[], [], [], []]; // 4 слота
-    gamesWithKeystone.forEach(p => {
-        const runes = p.primaryRunes || [];
-        runes.forEach((runeId, idx) => {
-            if (idx < 4 && runeId) {
-                runeSlotCounts[idx][runeId] = (runeSlotCounts[idx][runeId] || 0) + 1;
+        // Извлекаем perks из игр, правильно обрабатывая структуру
+        const perksList = games.map(g => {
+            const perks = g.perks;
+            if (!perks || !perks.primary) {
+                return null;
             }
-        });
-    });
+            return {
+                primary: perks.primary,
+                keystone: perks.keystone,
+                sub: perks.sub,
+                // primaryRunes может быть массивом объектов или чисел
+                primaryRunes: Array.isArray(perks.primaryRunes)
+                    ? perks.primaryRunes.map(r => typeof r === 'object' ? r.perk : r)
+                    : [],
+                // secondaryRunes может быть массивом объектов или чисел
+                secondaryRunes: Array.isArray(perks.secondaryRunes)
+                    ? perks.secondaryRunes.map(r => typeof r === 'object' ? r.perk : r)
+                    : [],
+                shards: perks.shards || []
+            };
+        }).filter(p => p && p.primary);
 
-    // Берем топ-1 для каждого слота (keystone уже известен)
-    const primaryRunes = [
-        keystoneId, // Слот 0 - keystone
-        ...runeSlotCounts.slice(1, 4).map(slotCounts => {
-            const top = getTopN(slotCounts, 1)[0];
-            return top ? parseInt(top[0]) : 0;
-        })
-    ];
+        if (perksList.length === 0) return null;
 
-    // ШАГ 4: Найти самую популярную вторичную ветку
-    const subTreeCounts = countFrequency(gamesWithKeystone, p => p.sub);
-    const [mostPopularSubTree] = getTopN(subTreeCounts, 1);
-    const subTreeId = mostPopularSubTree ? mostPopularSubTree[0] : (gamesWithKeystone[0].sub || 0);
+        // ШАГ 1: Найти самое популярное Основное древо
+        const primaryTreeCounts = countFrequency(perksList, p => p.primary);
+        const [mostPopularPrimaryTree] = getTopN(primaryTreeCounts, 1);
+        const primaryTreeId = mostPopularPrimaryTree ? parseInt(mostPopularPrimaryTree[0]) : perksList[0].primary;
 
-    // Фильтруем игры с этой вторичной веткой
-    const gamesWithSubTree = gamesWithKeystone.filter(p => p.sub === subTreeId);
+        // Фильтруем игры с этим основным древом
+        const gamesWithPrimaryTree = perksList.filter(p => p.primary === primaryTreeId);
+        if (gamesWithPrimaryTree.length === 0) return null;
 
-    // ШАГ 5: Найти самые популярные руны во вторичной ветке (топ-2)
-    let secondaryRunes = [];
-    if (gamesWithSubTree && gamesWithSubTree.length > 0) {
-        const secondaryRuneCounts = {};
-        gamesWithSubTree.forEach(p => {
-            (p.secondaryRunes || []).forEach(runeId => {
-                if (runeId) {
-                    secondaryRuneCounts[runeId] = (secondaryRuneCounts[runeId] || 0) + 1;
+        // ШАГ 2: Среди игр с этим древом найти самый популярный Краеугольный камень
+        const keystoneCounts = countFrequency(gamesWithPrimaryTree, p => p.keystone);
+        const [mostPopularKeystone] = getTopN(keystoneCounts, 1);
+        const keystoneId = mostPopularKeystone ? parseInt(mostPopularKeystone[0]) : gamesWithPrimaryTree[0].keystone;
+
+        // Фильтруем игры с этим кестоуном
+        const gamesWithKeystone = gamesWithPrimaryTree.filter(p => p.keystone === keystoneId);
+        if (gamesWithKeystone.length === 0) return null;
+
+        // ШАГ 3: Найти самые популярные малые руны для основной ветки (по слотам)
+        const runeSlotCounts = [[], [], [], []];
+        gamesWithKeystone.forEach(p => {
+            const runes = p.primaryRunes || [];
+            runes.forEach((runeId, idx) => {
+                if (idx < 4 && runeId) {
+                    runeSlotCounts[idx][runeId] = (runeSlotCounts[idx][runeId] || 0) + 1;
                 }
             });
         });
-        const topSecondary = getTopN(secondaryRuneCounts, 2);
-        secondaryRunes = topSecondary.map(x => parseInt(x[0]));
-    }
 
-    // ШАГ 6: Найти самые популярные адаптивные бонусы (3 ячейки)
-    const shardCounts = [[], [], []];
-    gamesWithKeystone.forEach(p => {
-        const shards = p.shards || [];
-        shards.forEach((shardId, idx) => {
-            if (idx < 3 && shardId) {
-                shardCounts[idx][shardId] = (shardCounts[idx][shardId] || 0) + 1;
-            }
+        const primaryRunes = [
+            keystoneId,
+            ...runeSlotCounts.slice(1, 4).map(slotCounts => {
+                const top = getTopN(slotCounts, 1)[0];
+                return top ? parseInt(top[0]) : 0;
+            })
+        ];
+
+        // ШАГ 4: Найти самую популярную вторичную ветку
+        const subTreeCounts = countFrequency(gamesWithKeystone, p => p.sub);
+        const [mostPopularSubTree] = getTopN(subTreeCounts, 1);
+        const subTreeId = mostPopularSubTree ? parseInt(mostPopularSubTree[0]) : (gamesWithKeystone[0].sub || 0);
+
+        const gamesWithSubTree = gamesWithKeystone.filter(p => p.sub === subTreeId);
+
+        // ШАГ 5: Найти самые популярные руны во вторичной ветке (топ-2)
+        let secondaryRunes = [];
+        if (gamesWithSubTree && gamesWithSubTree.length > 0) {
+            const secondaryRuneCounts = {};
+            gamesWithSubTree.forEach(p => {
+                (p.secondaryRunes || []).forEach(runeId => {
+                    if (runeId) {
+                        secondaryRuneCounts[runeId] = (secondaryRuneCounts[runeId] || 0) + 1;
+                    }
+                });
+            });
+            const topSecondary = getTopN(secondaryRuneCounts, 2);
+            secondaryRunes = topSecondary.map(x => parseInt(x[0]));
+        }
+
+        // ШАГ 6: Найти самые популярные адаптивные бонусы (3 ячейки)
+        const shardCounts = [[], [], []];
+        gamesWithKeystone.forEach(p => {
+            const shards = p.shards || [];
+            shards.forEach((shardId, idx) => {
+                if (idx < 3 && shardId) {
+                    shardCounts[idx][shardId] = (shardCounts[idx][shardId] || 0) + 1;
+                }
+            });
         });
-    });
 
-    const shards = shardCounts.map(slotCounts => {
-        const top = getTopN(slotCounts, 1)[0];
-        return top ? parseInt(top[0]) : 0;
-    });
+        const shards = shardCounts.map(slotCounts => {
+            const top = getTopN(slotCounts, 1)[0];
+            return top ? parseInt(top[0]) : 0;
+        });
 
-    return {
-        primary: parseInt(primaryTreeId),
-        keystone: parseInt(keystoneId),
-        primaryRunes: primaryRunes.map(x => parseInt(x)),
-        sub: parseInt(subTreeId),
-        secondaryRunes: secondaryRunes,
-        shards: shards
-    };
+        return {
+            primary: parseInt(primaryTreeId),
+            keystone: parseInt(keystoneId),
+            primaryRunes: primaryRunes.map(x => parseInt(x)),
+            sub: parseInt(subTreeId),
+            secondaryRunes: secondaryRunes,
+            shards: shards
+        };
+    } catch (error) {
+        return null;
+    }
 }
 
 // ============================================================================
