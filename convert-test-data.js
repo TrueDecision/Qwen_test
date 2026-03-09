@@ -35,6 +35,8 @@ const STARTING_ITEMS = new Set([
     // Меч
     1036
 ]);
+// Аксессуары (варды) — исключать из стартовых наборов
+const TRINKET_IDS = new Set([3340, 3363, 3364]); // Stealth Ward, Farsight Alteration, Oracle Lens
 // Предметы которые считаются "первыми предметами" (не стартовые, не сапоги)
 const FIRST_ITEM_CANDIDATES = new Set([
     3802, 3803, 6617, 6653, 6655, 6656, 6657, 6660, 6661, 6662, 6664, 6665, 6666, 6667, 6670, 6671, 6672, 6673, 6675, 6676, 6677, // Mythics
@@ -198,12 +200,13 @@ function analyzeItems(games, role) {
 
         // Берем предметы купленные в первые 2 минуты (120 секунд)
         const earlyItems = (itemPurchases.itemPurchaseTimeline || [])
-            .filter(p => p.minutes <= 2)
+            .filter(p => p.minutes <= 2 && !TRINKET_IDS.has(p.itemId))
             .map(p => p.itemId);
 
-        // Также учитываем startingItems из данных
-        const startingItems = itemPurchases.startingItems || earlyItems.slice(0, 3);
-        
+        // Также учитываем startingItems из данных (исключая варды)
+        const startingItems = (itemPurchases.startingItems || earlyItems.slice(0, 3))
+            .filter(id => !TRINKET_IDS.has(id));
+
         if (startingItems.length > 0) {
             const key = startingItems.slice().sort().join('-');
             if (!startingItemCombos[key]) {
@@ -325,9 +328,11 @@ function analyzeItems(games, role) {
 
     // === ФИНИШНАЯ СБОРКА (6 предметов) ===
     const fullBuildCombos = {};
-    
+
     games.forEach(game => {
-        const items = (game.items || []).filter(id => !STARTING_ITEMS.has(id));
+        const items = (game.items || []).filter(id => 
+            !STARTING_ITEMS.has(id) && !TRINKET_IDS.has(id)
+        );
         if (items.length >= 5) {
             const comboKey = items.slice(0, 6).sort().join('-');
             fullBuildCombos[comboKey] = (fullBuildCombos[comboKey] || 0) + 1;
@@ -335,13 +340,24 @@ function analyzeItems(games, role) {
     });
 
     const [topFullBuild] = getTopN(fullBuildCombos, 1);
-    const fullBuildItems = topFullBuild ? topFullBuild[0].split('-').map(x => parseInt(x)) : coreBuildOrder;
+    const fullBuildItems = topFullBuild ? topFullBuild[0].split('-').map(x => parseInt(x)) : [];
 
     // === ФОРМИРУЕМ ИТОГОВЫЙ БИЛД ===
-    // Вставляем сапог на правильную позицию (после 1-2 предмета)
-    const finalBuildOrder = [...coreBuildOrder];
-    if (topBoots.length > 0 && topBoots[0].percent >= 40) {
-        finalBuildOrder.splice(1, 0, topBoots[0].id);
+    // Используем fullBuildItems как основу, если есть
+    let finalBuildOrder = [...fullBuildItems];
+    
+    // Если fullBuildItems пустой, используем coreBuildOrder + boots
+    if (finalBuildOrder.length === 0) {
+        finalBuildOrder = [...coreBuildOrder];
+        if (topBoots.length > 0 && topBoots[0].percent >= 40) {
+            finalBuildOrder.splice(1, 0, topBoots[0].id);
+        }
+    } else {
+        // Вставляем сапог на правильную позицию, если его нет в fullBuildItems
+        const hasBoots = finalBuildOrder.some(id => BOOTS_IDS.has(id));
+        if (!hasBoots && topBoots.length > 0 && topBoots[0].percent >= 40) {
+            finalBuildOrder.splice(1, 0, topBoots[0].id);
+        }
     }
 
     // Частотный анализ для отображения
