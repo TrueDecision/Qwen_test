@@ -468,28 +468,28 @@ window.switchBuild = function(buildIndex) {
 window.toggleProBuilds = async function(champId, role) {
     const container = document.getElementById('pro-builds-container');
     if (!container) return;
-    
+
     // Если уже открыто - закрываем
     if (container.dataset.isOpen === 'true') {
         container.innerHTML = '';
         container.dataset.isOpen = 'false';
         return;
     }
-    
+
     // Показываем загрузку
     container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Loading pro builds...</div>';
     container.dataset.isOpen = 'true';
-    
+
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/pro-builds/${champId}?role=${role}`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/pro-builds/${champId}?role=${role}&sortBy=duration&sortOrder=desc`);
         const data = await response.json();
-        
+
         if (!data.matches || data.matches.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">No pro builds available</div>';
             return;
         }
-        
-        renderProBuilds(container, data.matches, champId);
+
+        renderProBuilds(container, data.matches, champId, role, data.sortBy, data.sortOrder);
     } catch (error) {
         console.error('Error loading pro builds:', error);
         container.innerHTML = '<div style="text-align:center; padding:20px; color:#f87171;">Error loading pro builds</div>';
@@ -497,21 +497,75 @@ window.toggleProBuilds = async function(champId, role) {
     }
 };
 
+// Глобальная функция для сортировки Pro Builds
+window.sortProBuilds = async function(sortBy) {
+    const champ = window.currentChampData;
+    const role = window.currentDetailRole;
+    if (!champ || !role) return;
+
+    const container = document.getElementById('pro-builds-container');
+    if (!container) return;
+
+    // Показываем загрузку
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Loading...</div>';
+
+    try {
+        const currentSortOrder = container.dataset.sortOrder || 'desc';
+        const newSortOrder = container.dataset.sortBy === sortBy && currentSortOrder === 'desc' ? 'asc' : 'desc';
+
+        const response = await fetch(`${CONFIG.API_BASE_URL}/pro-builds/${champ.id}?role=${role}&sortBy=${sortBy}&sortOrder=${newSortOrder}`);
+        const data = await response.json();
+
+        if (!data.matches || data.matches.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">No pro builds available</div>';
+            return;
+        }
+
+        container.dataset.sortBy = sortBy;
+        container.dataset.sortOrder = newSortOrder;
+        renderProBuilds(container, data.matches, champ.id, role, sortBy, newSortOrder);
+    } catch (error) {
+        console.error('Error sorting pro builds:', error);
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#f87171;">Error loading pro builds</div>';
+    }
+};
+
 // Рендер Pro Builds списка
-function renderProBuilds(container, matches, champId) {
+function renderProBuilds(container, matches, champId, role, sortBy = 'duration', sortOrder = 'desc') {
     const champInfo = AppState.db.champions[champId];
     const champName = champInfo ? champInfo.name : champId;
-    
+
+    // Сохраняем текущее состояние сортировки в контейнере
+    container.dataset.sortBy = sortBy;
+    container.dataset.sortOrder = sortOrder;
+
     let html = `
         <div style="background:#1e293b; border-radius:8px; border:1px solid #334155; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#0f172a; border-bottom:1px solid #334155;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#0f172a; border-bottom:1px solid #334155; flex-wrap:wrap; gap:10px;">
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="color:#fbbf24; font-weight:bold; font-size:14px;">🏆 Pro Builds - ${champName}</span>
                     <span style="color:#64748b; font-size:12px;">${matches.length} games</span>
                 </div>
-                <button onclick="document.getElementById('pro-builds-container').innerHTML=''; document.getElementById('pro-builds-container').dataset.isOpen='false'"
-                        style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:18px;"
-                        onmouseenter="this.style.color='#fff'" onmouseleave="this.style.color='#94a3b8'">&times;</button>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="color:#64748b; font-size:11px; text-transform:uppercase;">Sort by:</span>
+                    <button onclick="window.sortProBuilds('duration')"
+                            style="background:${sortBy === 'duration' ? '#fbbf24' : '#334155'}; color:${sortBy === 'duration' ? '#0f172a' : '#cbd5e1'};
+                                   border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:${sortBy === 'duration' ? 'bold' : 'normal'};
+                                   transition:all 0.2s;"
+                            onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                        ⏱ Duration ${sortBy === 'duration' && sortOrder === 'asc' ? '↑' : sortBy === 'duration' && sortOrder === 'desc' ? '↓' : ''}
+                    </button>
+                    <button onclick="window.sortProBuilds('lp')"
+                            style="background:${sortBy === 'lp' ? '#fbbf24' : '#334155'}; color:${sortBy === 'lp' ? '#0f172a' : '#cbd5e1'};
+                                   border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:11px; font-weight:${sortBy === 'lp' ? 'bold' : 'normal'};
+                                   transition:all 0.2s;"
+                            onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                        👑 LP/Rank ${sortBy === 'lp' && sortOrder === 'asc' ? '↑' : sortBy === 'lp' && sortOrder === 'desc' ? '↓' : ''}
+                    </button>
+                    <button onclick="document.getElementById('pro-builds-container').innerHTML=''; document.getElementById('pro-builds-container').dataset.isOpen='false'"
+                            style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:18px; margin-left:8px;"
+                            onmouseenter="this.style.color='#fff'" onmouseleave="this.style.color='#94a3b8'">&times;</button>
+                </div>
             </div>
             <div style="max-height:500px; overflow-y:auto;">
     `;
@@ -632,19 +686,24 @@ function renderProBuilds(container, matches, champId) {
                         ${match.itemPurchases?.itemPurchaseTimeline && match.itemPurchases.itemPurchaseTimeline.length > 0 ? `
                         <div>
                             <div style="font-size:11px; color:#fbbf24; margin-bottom:8px; text-transform:uppercase;">Item Purchase Order</div>
-                            <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div style="display:flex; flex-direction:column; gap:4px; max-height:400px; overflow-y:auto;">
                                 ${match.itemPurchases.itemPurchaseTimeline.map((purchase, idx) => {
                                     const item = AppState.db.items[String(purchase.itemId)];
                                     const itemImg = item ? `${CONFIG.DDRAGON_BASE}/img/item/${item.file}` : '';
                                     const itemName = item ? item.name : '';
+                                    // Форматируем время более красиво
+                                    const totalSeconds = Math.floor(purchase.timestamp / 1000);
+                                    const mins = Math.floor(totalSeconds / 60);
+                                    const secs = totalSeconds % 60;
+                                    const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
                                     return `
                                         <div style="display:flex; align-items:center; gap:8px; background:#1e293b; padding:4px 8px; border-radius:4px;">
-                                            <div style="font-size:9px; color:#64748b; min-width:35px;">${purchase.minutes}:00</div>
+                                            <div style="font-size:9px; color:#fbbf24; min-width:45px; font-weight:bold;">${timeStr}</div>
                                             <img src="${itemImg}" style="width:24px; height:24px; border-radius:4px;" title="${itemName}">
                                             <div style="font-size:10px; color:#cbd5e1;">${itemName}</div>
                                         </div>
                                     `;
-                                }).slice(0, 8).join('')}
+                                }).join('')}
                             </div>
                         </div>
                         ` : ''}

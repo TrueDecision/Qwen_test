@@ -1,86 +1,98 @@
 # 📝 CHANGELOG - LoL Stats EUW
 
-## Версия: 2026-03-04
+## Версия: 2026-03-09
 
 ---
 
 ## ✅ Выполненные изменения
 
-### 1. 📦 Улучшено отображение описания предметов
+### 1. 🛠️ Улучшена фильтрация Pro Builds по ролям
 
-**Файл:** `public/js/utils.js`
+**Файл:** `server.js`
 
 **Изменения:**
-- Разделение описания предмета на 2 блока:
-  - **⚡ Stats** - характеристики (урон, скорость атаки и т.д.)
-  - **✨ Passive** - пассивный/активный эффект
-- Блоки разделены визуальной границей
-- Заголовки выделены золотым цветом
+- Улучшена логика фильтрации матчей по ролям
+- Поддержка обоих форматов ролей: Riot API (BOTTOM, UTILITY, MIDDLE) и фронтенд (ADC, SUPPORT, MID)
+- Добавлено логирование для отладки фильтрации
+- Исправлена проблема с несоответствием ролей при запросе Pro Builds
 
 **Пример:**
-```
-⚡ Stats:
-+10 Attack Damage
-+15 Attack Speed
-
-─────────────────
-✨ Passive:
-Attacks deal bonus damage...
+```javascript
+// Теперь работает корректно:
+GET /api/pro-builds/1?role=ADC      // Фильтрует BOTTOM матчи
+GET /api/pro-builds/1?role=SUPPORT  // Фильтрует UTILITY матчи
+GET /api/pro-builds/1?role=MID      // Фильтрует MIDDLE матчи
 ```
 
 ---
 
-### 2. 🎁 Добавлен popup для предметов на странице чемпиона
-
-**Файл:** `public/index.html`
-
-**Изменения:**
-- Добавлен элемент `<div id="game-tooltip" class="tooltip-box">`
-- Теперь при наведении на предмет показывается tooltip с названием и описанием
-- При клике открывается модальное окно с полной информацией
-
----
-
-### 3. ⚠️ Добавлена логика взаимоисключающих предметов
-
-**Файл:** `public/js/item-groups.js` (новый)
-
-**Группы предметов:**
-- **boots** - только 1 сапог (3006, 3009, 3020, 3047, 3111, 3117, 3158)
-- **tiamat** - только 1 предмет из группы тиамат
-- **sheen** - только 1 предмет из группы Sheen (Trinity, Manamune и т.д.)
-- **stormrazor** - только 1 предмет из группы Stormrazor
-- **hydra** - только 1 Hydra предмет
-- **support** - только 1 support item
-- **jungle** - только 1 jungle item
-- **crown** - только 1 Crown/Everfrost
-
-**Функции:**
-- `canAddItem(newItemId, currentItems)` - проверка можно ли добавить предмет
-- `getConflictingItems(itemId, currentItems)` - получить конфликтующие предметы
-- `getItemGroup(itemId)` - получить название группы предмета
-
----
-
-### 4. 📱 Увеличен шрифт для мобильных устройств
+### 2. ⏱️ Улучшено отображение Item Purchase Timeline
 
 **Файл:** `public/js/render-detail.js`
 
 **Изменения:**
-- Размер иконки предмета: 34px → **36px**
-- Размер шрифта названия: 9px → **11px**
-- Цвет текста: #888 → **#cbd5e1** (светлее, лучше контраст)
-- Макс. ширина: 40px → **45px**
+- **Убрано ограничение в 8 предметов** - теперь показываются все предметы из timeline
+- **Улучшен формат времени** - вместо `7:00` теперь `7:00` с секундами (7:23)
+- **Добавлен скролл** для длинных списков покупок (max-height: 400px)
+- **Золотой цвет времени** для лучшей видимости
+
+**Пример отображения:**
+```
+Item Purchase Order
+┌─────────────────────────────┐
+│ 7:23  [Everfrost icon] Everfrost │
+│ 12:45 [Shadowflame icon] Shadowflame │
+│ 15:30 [Zhonya's icon] Zhonya's Hourglass │
+└─────────────────────────────┘
+```
 
 ---
 
-### 5. 🎨 Исправлен фон у skill order
+### 3. 🎚️ Добавлены фильтры сортировки для Pro Builds
 
-**Файл:** `public/js/skill-order.js`
+**Файлы:** `server.js`, `public/js/render-detail.js`
 
-**Изменения:**
-- Добавлен `background:#1e293b` для первого столбца таблицы
-- Теперь фон непрозрачный, точки прокачки не просвечивают
+**Новые возможности:**
+- **Сортировка по длительности** (⏱ Duration) - по умолчанию
+- **Сортировка по рангу/LP** (👑 LP/Rank) - Challenger > Grandmaster > Master
+- **Переключение порядка** (↑/↓) - клик по кнопке меняет направление
+
+**API изменения:**
+```javascript
+// Новые query параметры:
+GET /api/pro-builds/:champId?role=ALL&sortBy=duration&sortOrder=desc
+GET /api/pro-builds/:champId?role=ALL&sortBy=lp&sortOrder=asc
+
+// Ответ API теперь включает:
+{
+  "championId": "1",
+  "role": "MIDDLE",
+  "matches": [...],
+  "sortBy": "duration",
+  "sortOrder": "desc"
+}
+```
+
+**UI:**
+```
+┌─────────────────────────────────────────────────────┐
+│ 🏆 Pro Builds - Annie  15 games                    │
+│ Sort by: [⏱ Duration ↓] [👑 LP/Rank] [×]           │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+### 4. 📊 Обновлена структура данных matches
+
+**Файл:** `convert-test-data.js`
+
+**Данные в matches теперь включают:**
+- `summonerName` - имя игрока
+- `playerRank` - ранг (Master+)
+- `playerTier` - точный тир (MASTER, GRANDMASTER, CHALLENGER)
+- `itemPurchases.itemPurchaseTimeline` - полная хронология покупок
+- `skillOrder` - порядок прокачки навыков
 
 ---
 
@@ -88,11 +100,9 @@ Attacks deal bonus damage...
 
 | Файл | Изменения |
 |------|-----------|
-| `public/js/utils.js` | Разделение описания предметов на Stats/Passive |
-| `public/index.html` | Добавлен game-tooltip элемент |
-| `public/js/item-groups.js` | ✨ Новый файл - логика взаимоисключающих предметов |
-| `public/js/render-detail.js` | Увеличен шрифт и иконки предметов |
-| `public/js/skill-order.js` | Добавлен непрозрачный фон |
+| `server.js` | Улучшена фильтрация ролей, добавлена сортировка (sortBy, sortOrder) |
+| `public/js/render-detail.js` | UI сортировки Pro Builds, улучшенный timeline, все предметы |
+| `convert-test-data.js` | Данные matches с полной информацией |
 
 ---
 
@@ -101,83 +111,79 @@ Attacks deal bonus damage...
 ### Локально (разработка):
 
 ```bash
-# Проверка изменений
-git status
+# Проверка данных
+node -e "const d=JSON.parse(require('fs').readFileSync('cache/full-analytics-stats.json','utf8')); console.log('Champions:', Object.keys(d).length);"
 
-# Добавление всех изменений
+# Запуск сервера
+node server.js
+
+# Тест API
+curl "http://localhost:3000/api/pro-builds/1?role=MIDDLE&sortBy=lp"
+```
+
+### Обновление на сервере:
+
+```bash
+# Git push (Vercel авто-деплой)
 git add .
-
-# Коммит
-git commit -m "Improve item display: tooltips, exclusive items, mobile UI"
-
-# Push на GitHub
+git commit -m "Improve Pro Builds: sorting, timeline display, role filtering"
 git push origin main
-```
 
-### Обновление сервера сбора данных:
-
-```bash
-# 1. Скопировать исправленный файл на сервер (SCP)
-scp final-test-collector.js user@server:/path/to/project/
-
-# 2. Или через Git на сервере
-ssh user@server
-cd /path/to/project
-git pull origin main
-
-# 3. Перезапустить сборщик
-node final-test-collector.js
-```
-
-### Обновление Vercel:
-
-```bash
-# Vercel автоматически обновляется при git push
-# Проверить статус деплоя: https://vercel.com/dashboard
-
-# Логи деплоя:
-vercel logs --follow
+# Проверка деплоя
+https://vercel.com/dashboard
 ```
 
 ---
 
-## 🔄 Откат изменений
+## 🎯 Проверка работы
 
-Если нужно откатить к предыдущей версии:
-
+### 1. Item Purchase Timeline
 ```bash
-# Посмотреть историю коммитов
-git log --oneline -10
+# Проверка структуры данных
+node -e "const d=JSON.parse(require('fs').readFileSync('cache/full-analytics-stats.json','utf8')); const m=Object.values(d)[0].matches[0]; console.log('Timeline:', m.itemPurchases?.itemPurchaseTimeline?.length||0, 'items');"
+```
 
-# Откатить к конкретному коммиту
-git reset --hard <commit-hash>
+### 2. Pro Builds API
+```bash
+# Тест сортировки по длительности
+curl "http://localhost:3000/api/pro-builds/1?role=MIDDLE&sortBy=duration&sortOrder=desc"
 
-# Откатить только конкретный файл
-git checkout <commit-hash> -- path/to/file
+# Тест сортировки по рангу
+curl "http://localhost:3000/api/pro-builds/1?role=MIDDLE&sortBy=lp&sortOrder=desc"
+```
 
-# Откатить и запушить (осторожно!)
-git push -f origin main
+### 3. Фильтрация по ролям
+```bash
+# ADC (BOTTOM)
+curl "http://localhost:3000/api/pro-builds/22?role=ADC"
+
+# SUPPORT (UTILITY)
+curl "http://localhost:3000/api/pro-builds/412?role=SUPPORT"
+
+# MID (MIDDLE)
+curl "http://localhost:3000/api/pro-builds/1?role=MID"
 ```
 
 ---
 
 ## 📊 Статистика изменений
 
-- **Изменено файлов:** 5
-- **Создано файлов:** 1
-- **Строк добавлено:** ~200
-- **Строк удалено:** ~50
+- **Изменено файлов:** 3
+- **Строк добавлено:** ~150
+- **Строк удалено:** ~30
+- **Новые API параметры:** sortBy, sortOrder
 
 ---
 
 ## 🎯 Следующие задачи
 
-- [ ] Интеграция логики взаимоисключающих предметов в UI
-- [ ] Отображение предупреждений о конфликтующих предметах
-- [ ] Улучшение мобильного UI (адаптивная вёрстка)
-- [ ] Оптимизация размера кэша для Vercel
+- [ ] Добавить сортировку по дате матча (если доступно в данных)
+- [ ] Улучшить отображение ранга игрока (LP, division)
+- [ ] Добавить фильтрацию по.win/loss
+- [ ] Интеграция с Telegram Mini App для Pro Builds
 
 ---
 
-**Дата обновления:** 2026-03-04  
-**Версия:** 1.1.0
+**Дата обновления:** 2026-03-09  
+**Версия:** 1.2.0  
+**Статус:** ✅ Production Ready - Pro Builds Improvements

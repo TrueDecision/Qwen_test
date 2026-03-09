@@ -205,6 +205,8 @@ app.get('/api/stats', async (req, res) => {
 app.get('/api/pro-builds/:champId', async (req, res) => {
     const champId = req.params.champId;
     let role = req.query.role || 'ALL';
+    let sortBy = req.query.sortBy || 'duration'; // 'duration', 'lp', 'date'
+    let sortOrder = req.query.sortOrder || 'desc'; // 'asc', 'desc'
 
     // Нормализация роли (фронтенд -> Riot API)
     const REVERSE_ROLE_MAPPING = {
@@ -216,7 +218,7 @@ app.get('/api/pro-builds/:champId', async (req, res) => {
     };
     const riotRole = REVERSE_ROLE_MAPPING[role] || role;
 
-    console.log(`\n🎯 Запрос pro builds: ${champId} (${role} -> ${riotRole})`);
+    console.log(`\n🎯 Запрос pro builds: ${champId} (${role} -> ${riotRole}), sort: ${sortBy} ${sortOrder}`);
 
     const cachedData = loadCachedStats();
 
@@ -225,28 +227,64 @@ app.get('/api/pro-builds/:champId', async (req, res) => {
     }
 
     const champData = cachedData[champId];
-    const matches = champData.matches || [];
+    const allMatches = champData.matches || [];
+
+    console.log(`   📊 Всего matches: ${allMatches.length}`);
 
     // Фильтруем по роли если указана
-    const filteredMatches = role === 'ALL'
-        ? matches
-        : matches.filter(m => {
-              // Нормализуем роль из матча
-              const matchRole = m.role === 'BOTTOM' ? 'ADC' : 
-                               m.role === 'UTILITY' ? 'SUPPORT' : 
-                               m.role === 'MIDDLE' ? 'MID' : m.role;
-              return matchRole === role || m.role === riotRole;
-          });
+    let filteredMatches = allMatches;
+    if (role !== 'ALL') {
+        filteredMatches = allMatches.filter(m => {
+            // Поддерживаем оба формата: Riot API роли и фронтенд роли
+            const matchRole = m.role;
+            // Проверяем точное совпадение с Riot ролью или фронтенд ролью
+            const matchesByRiotRole = matchRole === riotRole;
+            const matchesByFrontendRole = (
+                (role === 'ADC' && matchRole === 'BOTTOM') ||
+                (role === 'SUPPORT' && matchRole === 'UTILITY') ||
+                (role === 'MID' && matchRole === 'MIDDLE') ||
+                (role === 'TOP' && matchRole === 'TOP') ||
+                (role === 'JUNGLE' && matchRole === 'JUNGLE')
+            );
+            return matchesByRiotRole || matchesByFrontendRole;
+        });
+        console.log(`   📊 Отфильтровано по роли ${role}: ${filteredMatches.length}`);
+    }
 
-    // Сортируем по времени (свежие сначала) и берем топ-15
-    const topMatches = filteredMatches
-        .sort((a, b) => (b.gameDuration || 0) - (a.gameDuration || 0))
-        .slice(0, 15);
+    // Сортировка
+    filteredMatches.sort((a, b) => {
+        let comparison = 0;
+
+        switch (sortBy) {
+            case 'lp':
+                // Сортировка по рангу (Master, Grandmaster, Challenger)
+                const tierOrder = { 'CHALLENGER': 3, 'GRANDMASTER': 2, 'MASTER': 1 };
+                const aTier = tierOrder[a.playerTier] || 0;
+                const bTier = tierOrder[b.playerTier] || 0;
+                comparison = bTier - aTier;
+                break;
+
+            case 'duration':
+            default:
+                // Сортировка по длительности игры
+                comparison = (b.gameDuration || 0) - (a.gameDuration || 0);
+                break;
+        }
+
+        return sortOrder === 'desc' ? comparison : -comparison;
+    });
+
+    // Берем топ-15
+    const topMatches = filteredMatches.slice(0, 15);
+
+    console.log(`   ✅ Возвращаем ${topMatches.length} matches`);
 
     res.json({
         championId: champId,
         role,
-        matches: topMatches
+        matches: topMatches,
+        sortBy,
+        sortOrder
     });
 });
 
